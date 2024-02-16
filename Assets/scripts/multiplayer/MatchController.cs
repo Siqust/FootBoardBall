@@ -12,7 +12,9 @@ namespace Mirror.Examples.MultipleMatch
         internal readonly SyncDictionary<NetworkIdentity, MatchPlayerData> matchPlayerData = new SyncDictionary<NetworkIdentity, MatchPlayerData>();
         internal readonly Dictionary<CellValue, CellGUI> MatchCells = new Dictionary<CellValue, CellGUI>();
 
-        [Header("Game Logic")]
+        [Header("Game Things")]
+        [SyncVar] public List<int> row1;
+        [SyncVar] public List<int> row2;
 
 
         CellValue boardScore = CellValue.None;
@@ -37,6 +39,8 @@ namespace Mirror.Examples.MultipleMatch
         void Awake()
         {
             canvasController = FindObjectOfType<CanvasController>();
+            row1 = new List<int>() { 0, 0, 0 };
+            row2 = new List<int>() { 0, 0, 0 };
         }
         #region ServerPart
         public override void OnStartServer()
