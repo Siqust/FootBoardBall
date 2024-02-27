@@ -359,7 +359,6 @@ namespace Mirror.Examples.MultipleMatch
         [ServerCallback]
         void OnServerMatchMessage(NetworkConnectionToClient conn, ServerMatchMessage msg)
         {
-            Code_Text.text = "";
             switch (msg.serverMatchOperation)
             {
                 case ServerMatchOperation.None:
@@ -498,7 +497,6 @@ namespace Mirror.Examples.MultipleMatch
                     break;
                 }
             }
-            Code_Text.text = code;
             openMatches.Add(newMatchId, new MatchInfo { matchId = newMatchId, maxPlayers = 2, players = 1, matchCode = code });
 
             PlayerInfo playerInfo = playerInfos[conn];
@@ -508,7 +506,7 @@ namespace Mirror.Examples.MultipleMatch
 
             PlayerInfo[] infos = matchConnections[newMatchId].Select(playerConn => playerInfos[playerConn]).ToArray();
 
-            conn.Send(new ClientMatchMessage { clientMatchOperation = ClientMatchOperation.Created, matchId = newMatchId, playerInfos = infos });
+            conn.Send(new ClientMatchMessage { clientMatchOperation = ClientMatchOperation.Created, matchId = newMatchId, playerInfos = infos, matchCode=code });
 
             SendMatchList();
         }
@@ -629,6 +627,10 @@ namespace Mirror.Examples.MultipleMatch
         [ClientCallback]
         void OnClientMatchMessage(ClientMatchMessage msg)
         {
+            if (msg.clientMatchOperation!= ClientMatchOperation.List)
+            {
+                Code_Text.text = msg.matchCode;
+            }
             switch (msg.clientMatchOperation)
             {
                 case ClientMatchOperation.None:

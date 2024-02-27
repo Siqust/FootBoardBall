@@ -20,6 +20,7 @@ namespace Mirror.Examples.MultipleMatch
         public Guid matchId;
         public MatchInfo[] matchInfos;
         public PlayerInfo[] playerInfos;
+        public string matchCode;
     }
 
     /// <summary>

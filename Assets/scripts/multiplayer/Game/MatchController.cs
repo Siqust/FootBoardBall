@@ -100,7 +100,6 @@ namespace Mirror.Examples.MultipleMatch
         [Command(requiresAuthority = false)]
         public void CmdMakePlay(CellValue cellValue, NetworkConnectionToClient sender = null)
         {
-            // If wrong player or cell already taken, ignore
             if (sender.identity != currentPlayer || MatchCells[cellValue].playerIdentity != null)
                 return;
 
@@ -127,7 +126,6 @@ namespace Mirror.Examples.MultipleMatch
             }
             else
             {
-                // Set currentPlayer SyncVar so clients know whose turn it is
                 currentPlayer = currentPlayer == player1 ? player2 : player1;
             }
 

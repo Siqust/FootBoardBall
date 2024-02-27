@@ -26,9 +26,7 @@ namespace Mirror.Examples.MultipleMatch
                 this.StartClient();
                 gameObject.GetComponent<NetworkManagerHUD>().enabled = false;
             }
-
         }
-
         #region Server System Callbacks
 
         /// <summary>
