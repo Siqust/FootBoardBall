@@ -9,6 +9,7 @@ public class DraggbleItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     [HideInInspector] public Transform ParentAfterDrag;
     public bool CanDrag;
     private int siblingindex;
+    private bool stopEndDrag;
     Image card;
     private void Start()
     {
@@ -29,6 +30,8 @@ public class DraggbleItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (!CanDrag)
+            return;
         Debug.Log("Dragging");
         transform.position = Input.mousePosition;
     }
@@ -36,8 +39,15 @@ public class DraggbleItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     public void OnEndDrag(PointerEventData eventData)
     {
         Debug.Log("EndDrag");
+        if (stopEndDrag) return;
         transform.parent = ParentAfterDrag;
         transform.SetSiblingIndex(siblingindex);
         card.raycastTarget = true;
+        transform.localPosition = Vector3.zero;
+        if (CanDrag == false)
+        {
+            stopEndDrag = true;
+            transform.SetAsLastSibling();
+        }
     }
 }
