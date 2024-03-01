@@ -7,6 +7,8 @@ using UnityEngine.EventSystems;
 public class DraggbleItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [HideInInspector] public Transform ParentAfterDrag;
+    public ScriptableObject Card;
+    public CardType cardType;
     public bool CanDrag;
     private int siblingindex;
     private bool stopEndDrag;
@@ -15,12 +17,21 @@ public class DraggbleItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     {
         CanDrag = true;
         card = GetComponent<Image>();
+        try
+        {
+            cardType = ((PlayerCard)Card).cardtype;
+        }
+        catch { }
+        try
+        {
+            cardType = ((ActionCard)Card).cardtype;
+        }
+        catch { }
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!CanDrag)
             return;
-        Debug.Log("BeginDrag");
         ParentAfterDrag = transform.parent;
         siblingindex = transform.GetSiblingIndex();
         transform.SetParent(transform.root);
@@ -32,13 +43,11 @@ public class DraggbleItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     {
         if (!CanDrag)
             return;
-        Debug.Log("Dragging");
         transform.position = Input.mousePosition;
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log("EndDrag");
         if (stopEndDrag) return;
         transform.parent = ParentAfterDrag;
         transform.SetSiblingIndex(siblingindex);
@@ -47,7 +56,10 @@ public class DraggbleItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
         if (CanDrag == false)
         {
             stopEndDrag = true;
-            transform.SetAsLastSibling();
+            if (cardType != CardType.ActPlayer)
+            {
+                transform.SetAsFirstSibling();
+            }
         }
     }
 }

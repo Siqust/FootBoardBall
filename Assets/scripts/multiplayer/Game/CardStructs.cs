@@ -9,6 +9,12 @@ public enum CardType : byte
     ActRow,
     ActField
 }
+public enum CardScriptType : byte
+{
+    ScriptableObject,
+    Playercard,
+    ActionCard
+}
 
 public enum PlayerAbility : byte
 {

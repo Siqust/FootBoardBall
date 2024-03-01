@@ -8,11 +8,11 @@ public class InputCardPlacement : MonoBehaviour, IDropHandler
     public CardType cardtype;
     public void OnDrop(PointerEventData eventData)
     {
+        if (cardtype == CardType.Player && transform.childCount >= 3) return;
         GameObject dropped = eventData.pointerDrag;
-        PlayerCard card = dropped.GetComponent<MonoPlayerCard>().card;
-        if (card.cardtype == cardtype)
+        DraggbleItem draggbleItem = dropped.GetComponent<DraggbleItem>();
+        if (draggbleItem.cardType == cardtype)
         {
-            DraggbleItem draggbleItem = dropped.GetComponent<DraggbleItem>();
             draggbleItem.ParentAfterDrag = transform;
             draggbleItem.CanDrag = false;
         }
