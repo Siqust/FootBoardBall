@@ -1,14 +1,26 @@
 using System;
 
 
-public enum CardType : byte
+public enum ActionCardType : byte
 {
     None,
-    Player,
-    ActPlayer,
+    ActPlayerLT,
+    ActPlayerOT,
     ActRow,
     ActField
 }
+public enum RowType : byte
+{
+    Attack,
+    Defence
+}
+public enum MoveType : byte
+{
+    Player,
+    ActionOnPlayer,
+    ActionOnRow
+}
+
 public enum CardScriptType : byte
 {
     ScriptableObject,
@@ -39,4 +51,10 @@ public enum PlayerAbility : byte
     Decisive,
     Replicator,
     Siren
+}
+
+public enum ActionAbility : byte
+{
+    None,
+    RemovePlayer
 }

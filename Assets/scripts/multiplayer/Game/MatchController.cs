@@ -1,315 +1,749 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Mirror;
 
-namespace Mirror.Examples.MultipleMatch
+
+public struct Row
 {
-    [RequireComponent(typeof(NetworkMatch))]
-    public class MatchController : NetworkBehaviour
+    public List<ActionCardObj> row_modifiers;
+    public Dictionary<PlayerCardObj, List<ActionCardObj>> cards;
+}
+
+[RequireComponent(typeof(NetworkMatch))]
+public class MatchController : NetworkBehaviour
+{
+    internal readonly SyncDictionary<NetworkIdentity, MatchPlayerData> matchPlayerData = new SyncDictionary<NetworkIdentity, MatchPlayerData>();
+    internal readonly Dictionary<CellValue, CellGUI> MatchCells = new Dictionary<CellValue, CellGUI>();
+
+    [Header("Field Players")]
+    public RowPlayers me_attack_players;
+    public RowPlayers me_defence_players;
+    public RowPlayers opponent_attack_players;
+    public RowPlayers opponent_defence_players;
+
+    [Header("Rows Modifiers")]
+    public RowModifiers opponent_defence_modifs;
+    public RowModifiers opponent_attack_modifs;
+    public RowModifiers me_attack_modifs;
+    public RowModifiers me_defence_modifs;
+
+
+    [Header("Players' Cards")]
+    [SerializeField] private List<PlayerCardObj> player1_players; //
+    [SerializeField] private List<ActionCardObj> player1_actions; //
+    [SerializeField] private List<PlayerCardObj> player2_players; //
+    [SerializeField] private List<ActionCardObj> player2_actions; //
+
+    [Header("GameRows")]
+    [SerializeField] private Row[] player1_field_cards = new Row[2]; //
+    [SerializeField] private Row[] player2_field_cards = new Row[2]; //
+
+    [Header("Cards")]
+    public PlayerCardObj[] players_cards;
+    public ActionCardObj[] actions_cards;
+
+    [Header("Cards Holders")]
+    [SerializeField] private Transform visual_cards_holder;
+    [SerializeField] private Transform player_players_cards_holder;
+    [SerializeField] private Transform player_actions_cards_holder;
+
+    [Header("CardSpawns")]
+    [SerializeField] private Transform opponent_card_spawn;
+    [SerializeField] private Transform stack_card_spawn;
+    [SerializeField] private Transform me_card_spawn;
+
+
+    CellValue boardScore = CellValue.None;
+    [SerializeField] bool playAgain = false;
+    
+    [Header("GUI References")]
+    public CanvasGroup canvasGroup;
+    public Text gameText;
+    public Button exitButton;
+    public Button playAgainButton;
+    public Text winCountLocal;
+    public Text winCountOpponent;
+
+    [Header("Diagnostics - Do Not Modify")]
+    public CanvasController canvasController;
+    public NetworkIdentity player1;
+    public NetworkIdentity player2;
+    public NetworkIdentity startingPlayer;
+
+
+    [SyncVar(hook = nameof(UpdateGameUI))]
+    public NetworkIdentity currentPlayer;
+    void Awake()
     {
-        internal readonly SyncDictionary<NetworkIdentity, MatchPlayerData> matchPlayerData = new SyncDictionary<NetworkIdentity, MatchPlayerData>();
-        internal readonly Dictionary<CellValue, CellGUI> MatchCells = new Dictionary<CellValue, CellGUI>();
+        player1_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
+        player2_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
+        player1_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
+        player2_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
+        canvasController = FindObjectOfType<CanvasController>();
+    }
+    #region ServerPart
+    public override void OnStartServer()
+    {
+        StartCoroutine(AddPlayersToMatchController());
+    }
 
-        [Header("Game Things")]
-        [SyncVar] public List<int> row1;
-        [SyncVar] public List<int> row2;
+    // For the SyncDictionary to properly fire the update callback, we must
+    // wait a frame before adding the players to the already spawned MatchController
+    IEnumerator AddPlayersToMatchController()
+    {
+        yield return null;
 
+        matchPlayerData.Add(player1, new MatchPlayerData { playerIndex = CanvasController.playerInfos[player1.connectionToClient].playerIndex });
+        matchPlayerData.Add(player2, new MatchPlayerData { playerIndex = CanvasController.playerInfos[player2.connectionToClient].playerIndex });
 
-        CellValue boardScore = CellValue.None;
-        bool playAgain = false;
-
-        [Header("GUI References")]
-        public CanvasGroup canvasGroup;
-        public Text gameText;
-        public Button exitButton;
-        public Button playAgainButton;
-        public Text winCountLocal;
-        public Text winCountOpponent;
-
-        [Header("Diagnostics - Do Not Modify")]
-        public CanvasController canvasController;
-        public NetworkIdentity player1;
-        public NetworkIdentity player2;
-        public NetworkIdentity startingPlayer;
-
-        [SyncVar(hook = nameof(UpdateGameUI))]
-        public NetworkIdentity currentPlayer;
-        void Awake()
+        if (player1.isLocalPlayer)
         {
-            canvasController = FindObjectOfType<CanvasController>();
-            row1 = new List<int>() { 0, 0, 0 };
-            row2 = new List<int>() { 0, 0, 0 };
+            player1.gameObject.name = "ME";
+            player2.gameObject.name = "OPPONENT";
         }
-        #region ServerPart
-        public override void OnStartServer()
+        else
         {
-            StartCoroutine(AddPlayersToMatchController());
+            player2.gameObject.name = "ME";
+            player1.gameObject.name = "OPPONENT";
         }
 
-        // For the SyncDictionary to properly fire the update callback, we must
-        // wait a frame before adding the players to the already spawned MatchController
-        IEnumerator AddPlayersToMatchController()
+        for (int i = 0; i < 2; i++)
         {
-            yield return null;
-
-            matchPlayerData.Add(player1, new MatchPlayerData { playerIndex = CanvasController.playerInfos[player1.connectionToClient].playerIndex });
-            matchPlayerData.Add(player2, new MatchPlayerData { playerIndex = CanvasController.playerInfos[player2.connectionToClient].playerIndex });
+            SpawnPlayerCard(player1, i, -1);
+            player1_players.Add(players_cards[i]);
+        }
+        for (int i = 0; i < 5; i++)
+        {
+            SpawnActionCard(player1, 1, -1, -1, false);
+            player1_actions.Add(actions_cards[0]);
         }
 
-        public override void OnStartClient()
+        for (int i = 0; i < 2; i++)
         {
-            matchPlayerData.Callback += UpdateWins;
-
-            canvasGroup.alpha = 1f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-
-            exitButton.gameObject.SetActive(false);
-            playAgainButton.gameObject.SetActive(false);
+            SpawnPlayerCard(player2, i, -1);
+            player2_players.Add(players_cards[i]);
         }
-        #endregion
-
-        [ClientCallback]
-        public void UpdateGameUI(NetworkIdentity _, NetworkIdentity newPlayerTurn)
+        for (int i = 0; i < 5; i++)
         {
-            if (!newPlayerTurn) return;
+            SpawnActionCard(player2, 1, -1, -1, false);
+            player2_actions.Add(actions_cards[0]);
+        }
+    }
 
-            if (newPlayerTurn.gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
-            {
-                gameText.text = "Your Turn";
-                gameText.color = Color.blue;
+    public override void OnStartClient()
+    {
+        matchPlayerData.Callback += UpdateWins;
+
+        canvasGroup.alpha = 1f;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
+
+        exitButton.gameObject.SetActive(false);
+        playAgainButton.gameObject.SetActive(false);
+    }
+    #endregion
+
+    [ClientCallback]
+    public void UpdateGameUI(NetworkIdentity _, NetworkIdentity newPlayerTurn)
+    {
+        if (!newPlayerTurn) return;
+
+        if (newPlayerTurn.gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
+        {
+            gameText.text = "Your Turn";
+            gameText.color = Color.blue;
+        }
+        else
+        {
+            gameText.text = "Their Turn";
+            gameText.color = Color.red;
+        }
+    }
+
+    [ClientCallback]
+    public void UpdateWins(SyncDictionary<NetworkIdentity, MatchPlayerData>.Operation op, NetworkIdentity key, MatchPlayerData matchPlayerData)
+    {
+        if (key.gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
+            winCountLocal.text = $"Player {matchPlayerData.playerIndex}\n{matchPlayerData.wins}";
+        else
+            winCountOpponent.text = $"Player {matchPlayerData.playerIndex}\n{matchPlayerData.wins}";
+    }
+
+    [Command(requiresAuthority = false)]
+    public void MakePlay(MoveType movetype, int cardindex, MoveMessage movemessage, NetworkConnectionToClient sender = null)
+    {
+        NetworkIdentity opponent =  player1.isLocalPlayer ? player2 : player1;
+        if (sender.identity != currentPlayer)
+            return;
+        switch (movetype)
+        {
+            case MoveType.Player:
+                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH PLAYER CARD", players_cards[cardindex], "ON ROW", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE", "ON PLACE ", movemessage.col_to));
+                PlayerCardObj pCard = players_cards[cardindex];
+                PlayedWithPlayer(pCard, cardindex, movemessage);
+                break;
+            case MoveType.ActionOnPlayer:
+                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON PLAYER", players_cards[cardindex] ,"IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE", "ON PLACE ", movemessage.col_to, "TO", movemessage.is_opponent ? "OPPONENT": "SELF"));
+                ActionCardObj apCard = actions_cards[cardindex];
+                switch (apCard.cardtype)
+                {
+                    case ActionCardType.ActPlayerOT:
+                        switch (apCard.ability)
+                        {
+                            case ActionAbility.RemovePlayer:
+                                if (currentPlayer == player1)
+                                {
+                                    if (movemessage.is_opponent)
+                                    {
+                                        player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                    }
+                                    else
+                                    {
+                                        player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                    }
+                                    DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                                    DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
+                                }
+                                else
+                                {
+                                    if (movemessage.is_opponent)
+                                    {
+                                        player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                    }
+                                    else
+                                    {
+                                        player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                    }
+                                    DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                                    DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
+                                }
+                                break;
+                        }
+                        break;
+                    case ActionCardType.ActPlayerLT:
+                        if (currentPlayer == player1)
+                        {
+                            if (movemessage.is_opponent)
+                            {
+                                player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                            }
+                            else
+                            {
+                                player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                            }
+                            SpawnActionCard(player2, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent);
+                        }
+                        else
+                        {
+                            if (movemessage.is_opponent)
+                            {
+                                Debug.Log(("TO CARD:",(movemessage.row_to, players_cards[movemessage.card_index])));
+                                var keys = player1_field_cards[movemessage.row_to].cards.Keys.ToList();
+                                for (int i=0; i < keys.Count; i++)
+                                {
+                                    Debug.Log(("Keys:",keys[i]));
+                                }
+                                player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                            }
+                            else
+                            {
+                                player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                            }
+                            SpawnActionCard(player1, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent);
+                        }
+                        break;
+                }
+                break;
+            #region pass
+            /*
+            if (currentPlayer == player1) { 
+                switch (apCard.cardtype)
+                {
+                    case ActionCardType.ActPlayerOT:
+                        switch (apCard.ability) {
+
+                            case ActionAbility.RemovePlayer:
+                                if (movemessage.is_opponent)
+                                {
+                                    player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                }
+                                else
+                                {
+                                    player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                }
+                                DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                                DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
+                                break;
+                        }
+                        break;
+                }
             }
             else
             {
-                gameText.text = "Their Turn";
-                gameText.color = Color.red;
+                switch (apCard.cardtype)
+                {
+                    case ActionCardType.ActPlayerOT:
+                        switch (apCard.ability)
+                        {
+                            case ActionAbility.RemovePlayer:
+                                if (movemessage.is_opponent)
+                                {
+                                    player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                }
+                                else
+                                {
+                                    player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                }
+                                DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                                DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
+                                break;
+                        }
+                        break;
+                }
+            }*/
+            #endregion
+            case MoveType.ActionOnRow:
+                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON ROW IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE"));
+                break;
+        }
+
+        currentPlayer = currentPlayer == player1 ? player2 : player1;
+    }
+
+
+    void PlayedWithPlayer(PlayerCardObj card, int cardindex, MoveMessage movemessage)
+    {
+        if (currentPlayer == player1)
+        {
+            if (movemessage.row_from == -1)
+            {
+                if (player1_players.Contains(card))
+                {
+                    player1_players.Remove(card);
+                    player1_field_cards[movemessage.row_to].cards.Add(card, new List<ActionCardObj>());
+                    //Debug.Log(("player1",movemessage.row_to,card));
+                    SpawnPlayerCard(player2, cardindex, movemessage.row_to);
+                }
+                else Debug.Log(("WTF", "Current player doesn't have that card"), currentPlayer);
+            }
+            else
+            {
+                if (player1_field_cards[movemessage.row_from].cards.ContainsKey(card))
+                {
+                    List<ActionCardObj> cards_modifs = player1_field_cards[movemessage.row_from].cards[card];
+                    player1_field_cards[movemessage.row_to].cards.Add(card, cards_modifs);
+                    player1_field_cards[movemessage.row_from].cards.Remove(card);
+                }
+                else Debug.Log(("WTF", "Where did current player pulled that card from?"), currentPlayer);
+                MovePlayerCard(player2, movemessage);
             }
         }
-
-        [ClientCallback]
-        public void UpdateWins(SyncDictionary<NetworkIdentity, MatchPlayerData>.Operation op, NetworkIdentity key, MatchPlayerData matchPlayerData)
+        else
         {
-            if (key.gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
-                winCountLocal.text = $"Player {matchPlayerData.playerIndex}\n{matchPlayerData.wins}";
+            if (movemessage.row_from == -1)
+            {
+                if (player2_players.Contains(card))
+                {
+                    player2_players.Remove(card);
+                    player2_field_cards[movemessage.row_to].cards.Add(card, new List<ActionCardObj>());
+                    Debug.Log(("player2", movemessage.row_to, card));
+                    SpawnPlayerCard(player1, cardindex, movemessage.row_to);
+                }
+                else Debug.Log(("WTF", "Current player doesn't have that card"), currentPlayer);
+            }
             else
-                winCountOpponent.text = $"Player {matchPlayerData.playerIndex}\n{matchPlayerData.wins}";
+            {
+                if (player2_field_cards[movemessage.row_from].cards.ContainsKey(card))
+                {
+                    List<ActionCardObj> cards_modifs = player2_field_cards[movemessage.row_from].cards[card];
+                    player2_field_cards[movemessage.row_to].cards.Add(card, cards_modifs);
+                    player2_field_cards[movemessage.row_from].cards.Remove(card);
+                }
+                else Debug.Log(("WTF", "Where did current player pulled that card from?"), currentPlayer);
+                MovePlayerCard(player1, movemessage);
+            }
+        }
+    }
+    [ClientRpc]
+    public void RpcShowWinner(NetworkIdentity winner)
+    {
+        foreach (CellGUI cellGUI in MatchCells.Values)
+            cellGUI.GetComponent<Button>().interactable = false;
+
+        if (winner == null)
+        {
+            gameText.text = "Draw!";
+            gameText.color = Color.yellow;
+        }
+        else if (winner.gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
+        {
+            gameText.text = "Winner!";
+            gameText.color = Color.blue;
+        }
+        else
+        {
+            gameText.text = "Loser!";
+            gameText.color = Color.red;
         }
 
-        [Command(requiresAuthority = false)]
-        public void CmdMakePlay(CellValue cellValue, NetworkConnectionToClient sender = null)
+        exitButton.gameObject.SetActive(true);
+        playAgainButton.gameObject.SetActive(true);
+    }
+
+    [Command(requiresAuthority = false)]
+    public void CmdMakePlay(CellValue cellValue, NetworkConnectionToClient sender = null)
+    {
+        if (sender.identity != currentPlayer || MatchCells[cellValue].playerIdentity != null)
+            return;
+
+        MatchCells[cellValue].playerIdentity = currentPlayer;
+        RpcUpdateCell(cellValue, currentPlayer);
+
+        MatchPlayerData mpd = matchPlayerData[currentPlayer];
+        mpd.currentScore = mpd.currentScore | cellValue;
+        matchPlayerData[currentPlayer] = mpd;
+
+        boardScore = boardScore | cellValue;
+
+        if (CheckWinner(mpd.currentScore))
         {
-            if (sender.identity != currentPlayer || MatchCells[cellValue].playerIdentity != null)
-                return;
-
-            MatchCells[cellValue].playerIdentity = currentPlayer;
-            RpcUpdateCell(cellValue, currentPlayer);
-
-            MatchPlayerData mpd = matchPlayerData[currentPlayer];
-            mpd.currentScore = mpd.currentScore | cellValue;
+            mpd.wins += 1;
             matchPlayerData[currentPlayer] = mpd;
+            RpcShowWinner(currentPlayer);
+            currentPlayer = null;
+        }
+        else if (boardScore == CellValue.Full)
+        {
+            RpcShowWinner(null);
+            currentPlayer = null;
+        }
+        else
+        {
+            currentPlayer = currentPlayer == player1 ? player2 : player1;
+        }
 
-            boardScore = boardScore | cellValue;
+    }
 
-            if (CheckWinner(mpd.currentScore))
+    [ServerCallback]
+    bool CheckWinner(CellValue currentScore)
+    {
+        if ((currentScore & CellValue.TopRow) == CellValue.TopRow)
+            return true;
+        if ((currentScore & CellValue.MidRow) == CellValue.MidRow)
+            return true;
+        if ((currentScore & CellValue.BotRow) == CellValue.BotRow)
+            return true;
+        if ((currentScore & CellValue.LeftCol) == CellValue.LeftCol)
+            return true;
+        if ((currentScore & CellValue.MidCol) == CellValue.MidCol)
+            return true;
+        if ((currentScore & CellValue.RightCol) == CellValue.RightCol)
+            return true;
+        if ((currentScore & CellValue.Diag1) == CellValue.Diag1)
+            return true;
+        if ((currentScore & CellValue.Diag2) == CellValue.Diag2)
+            return true;
+
+        return false;
+    }
+
+    [ClientRpc]
+    public void RpcUpdateCell(CellValue cellValue, NetworkIdentity player)
+    {
+        MatchCells[cellValue].SetPlayer(player);
+    }
+
+    // Assigned in inspector to ReplayButton::OnClick
+    [ClientCallback]
+    public void RequestPlayAgain()
+    {
+        playAgainButton.gameObject.SetActive(false);
+        CmdPlayAgain();
+    }
+
+    [Command(requiresAuthority = false)]
+    public void CmdPlayAgain(NetworkConnectionToClient sender = null)
+    {
+        if (!playAgain)
+            playAgain = true;
+        else
+        {
+            playAgain = false;
+            RestartGame();
+        }
+    }
+
+    [ServerCallback]
+    public void RestartGame()
+    {
+        foreach (CellGUI cellGUI in MatchCells.Values)
+            cellGUI.SetPlayer(null);
+
+        boardScore = CellValue.None;
+
+        NetworkIdentity[] keys = new NetworkIdentity[matchPlayerData.Keys.Count];
+        matchPlayerData.Keys.CopyTo(keys, 0);
+
+        foreach (NetworkIdentity identity in keys)
+        {
+            MatchPlayerData mpd = matchPlayerData[identity];
+            mpd.currentScore = CellValue.None;
+            matchPlayerData[identity] = mpd;
+        }
+
+        RpcRestartGame();
+
+        startingPlayer = startingPlayer == player1 ? player2 : player1;
+        currentPlayer = startingPlayer;
+    }
+
+    [ClientRpc]
+    public void RpcRestartGame()
+    {
+        foreach (CellGUI cellGUI in MatchCells.Values)
+            cellGUI.SetPlayer(null);
+
+        exitButton.gameObject.SetActive(false);
+        playAgainButton.gameObject.SetActive(false);
+    }
+
+    // Assigned in inspector to BackButton::OnClick
+    [Client]
+    public void RequestExitGame()
+    {
+        exitButton.gameObject.SetActive(false);
+        playAgainButton.gameObject.SetActive(false);
+        CmdRequestExitGame();
+    }
+
+    [Command(requiresAuthority = false)]
+    public void CmdRequestExitGame(NetworkConnectionToClient sender = null)
+    {
+        StartCoroutine(ServerEndMatch(sender, false));
+    }
+
+    [ServerCallback]
+    public void OnPlayerDisconnected(NetworkConnectionToClient conn)
+    {
+        // Check that the disconnecting client is a player in this match
+        if (player1 == conn.identity || player2 == conn.identity)
+            StartCoroutine(ServerEndMatch(conn, true));
+    }
+
+    [ServerCallback]
+    public IEnumerator ServerEndMatch(NetworkConnectionToClient conn, bool disconnected)
+    {
+        RpcExitGame();
+
+        canvasController.OnPlayerDisconnected -= OnPlayerDisconnected;
+
+        // Wait for the ClientRpc to get out ahead of object destruction
+        yield return new WaitForSeconds(0.1f);
+
+        // Mirror will clean up the disconnecting client so we only need to clean up the other remaining client.
+        // If both players are just returning to the Lobby, we need to remove both connection Players
+
+        if (!disconnected)
+        {
+            NetworkServer.RemovePlayerForConnection(player1.connectionToClient, true);
+            CanvasController.waitingConnections.Add(player1.connectionToClient);
+
+            NetworkServer.RemovePlayerForConnection(player2.connectionToClient, true);
+            CanvasController.waitingConnections.Add(player2.connectionToClient);
+        }
+        else if (conn == player1.connectionToClient)
+        {
+            // player1 has disconnected - send player2 back to Lobby
+            NetworkServer.RemovePlayerForConnection(player2.connectionToClient, true);
+            CanvasController.waitingConnections.Add(player2.connectionToClient);
+        }
+        else if (conn == player2.connectionToClient)
+        {
+            // player2 has disconnected - send player1 back to Lobby
+            NetworkServer.RemovePlayerForConnection(player1.connectionToClient, true);
+            CanvasController.waitingConnections.Add(player1.connectionToClient);
+        }
+
+        // Skip a frame to allow the Removal(s) to complete
+        yield return null;
+
+        // Send latest match list
+        canvasController.SendMatchList();
+
+        NetworkServer.Destroy(gameObject);
+    }
+
+    public GameObject PlayerCardPrefab;
+    public GameObject ActionCardPrefab;
+
+    [ClientRpc]
+    public void MovePlayerCard(NetworkIdentity player, MoveMessage movemessage)
+    {
+        if (!player.isLocalPlayer) return;
+        Transform card = null;
+        switch (movemessage.row_from)
+        {
+            case 1:
+                card = opponent_attack_players.transform.GetChild(movemessage.col_from);
+                break;
+            case 0:
+                card = opponent_defence_players.transform.GetChild(movemessage.col_from);
+                break;
+        }
+        card.SetParent(movemessage.row_to == 1 ? opponent_attack_players.transform : opponent_defence_players.transform);
+        card.SetAsLastSibling();
+    }
+    [ClientRpc]
+    public void SpawnPlayerCard(NetworkIdentity player, int cardindex, int row)
+    {
+        if (!player.isLocalPlayer) { return; }
+        PlayerCardObj obj = players_cards[cardindex];
+        GameObject card = Instantiate(PlayerCardPrefab);
+        PlayerCard cardscript = card.GetComponent<PlayerCard>();
+        if (row == -1)
+        {
+            card.transform.SetParent(player_players_cards_holder);
+            cardscript.Placed = false;
+            cardscript.CanDrag = true;
+        }
+        else if (row == 1)
+        {
+            card.transform.SetParent(opponent_attack_players.transform);
+            cardscript.Placed = true;
+            cardscript.CanDrag = false;
+        }
+        else if (row == 0)
+        {
+            card.transform.SetParent(opponent_defence_players.transform);
+            cardscript.Placed = true;
+            cardscript.CanDrag = false;
+        }
+        else
+        {
+            Debug.Log("AAAAAAAAAAAAAAAAAA");
+        }
+        card.transform.localScale = Vector3.one;
+        cardscript.index = cardindex;
+        cardscript.visualcardparent = visual_cards_holder;
+        cardscript.matchcontroller = transform.GetComponent<MatchController>();
+        Color[] colors = { Color.cyan, Color.green, Color.red, Color.yellow, Color.blue, Color.magenta };
+        card.GetComponent<Image>().color = colors[UnityEngine.Random.Range(0, colors.Length)];
+        var plrmodifs = card.AddComponent<PlayerModifs>();
+        plrmodifs.matchcontroller = transform.GetComponent<MatchController>();
+        
+    }
+
+    [ClientRpc]
+    public void SpawnActionCard(NetworkIdentity player,int cardindex, int row, int col, bool is_opponent)
+    {
+        
+        if (!player.isLocalPlayer) { return; }
+        ActionCardObj obj = actions_cards[cardindex];
+        GameObject card = Instantiate(ActionCardPrefab);
+        ActionCard cardscript = card.GetComponent<ActionCard>();
+        if (row == -1)
+        {
+            card.transform.SetParent(player_actions_cards_holder);
+            StartCoroutine(ChangeVisualCardPos(cardscript, -1));
+        }
+        else
+        {
+            if (is_opponent)
             {
-                mpd.wins += 1;
-                matchPlayerData[currentPlayer] = mpd;
-                RpcShowWinner(currentPlayer);
-                currentPlayer = null;
-            }
-            else if (boardScore == CellValue.Full)
-            {
-                RpcShowWinner(null);
-                currentPlayer = null;
+                switch (row)
+                {
+                    case 1:
+                        card.transform.SetParent(opponent_attack_players.transform.GetChild(col));
+                        break;
+                    case 0:
+                        card.transform.SetParent(opponent_defence_players.transform.GetChild(col));
+                        break;
+                }
+                StartCoroutine(ChangeVisualCardPos(cardscript, 1));
             }
             else
             {
-                currentPlayer = currentPlayer == player1 ? player2 : player1;
+                switch (row)
+                {
+                    case 1:
+                        card.transform.SetParent(me_attack_players.transform.GetChild(col));
+                        break;
+                    case 0:
+                        card.transform.SetParent(me_defence_players.transform.GetChild(col));
+                        break;
+                }
+                StartCoroutine(ChangeVisualCardPos(cardscript, 1));
             }
-
+            card.transform.parent.GetComponent<PlayerCard>().offModifsImages();
+            card.transform.position = card.transform.parent.position;
         }
+        card.transform.localScale = Vector3.one;
+        Color[] colors = { Color.cyan, Color.green, Color.red, Color.yellow, Color.blue, Color.magenta };
+        card.GetComponent<Image>().color = colors[UnityEngine.Random.Range(0, colors.Length)];
+        cardscript.index = cardindex;
+        cardscript.matchcontroller = transform.GetComponent<MatchController>();
+        cardscript.cardtype = obj.cardtype;
+        cardscript.visualcardparent = visual_cards_holder;
 
-        [ServerCallback]
-        bool CheckWinner(CellValue currentScore)
+    }
+    IEnumerator ChangeVisualCardPos(ActionCard cardscript, int is_opponent)
+    {
+        yield return null;
+        Debug.Log("changed pos");
+        switch (is_opponent)
         {
-            if ((currentScore & CellValue.TopRow) == CellValue.TopRow)
-                return true;
-            if ((currentScore & CellValue.MidRow) == CellValue.MidRow)
-                return true;
-            if ((currentScore & CellValue.BotRow) == CellValue.BotRow)
-                return true;
-            if ((currentScore & CellValue.LeftCol) == CellValue.LeftCol)
-                return true;
-            if ((currentScore & CellValue.MidCol) == CellValue.MidCol)
-                return true;
-            if ((currentScore & CellValue.RightCol) == CellValue.RightCol)
-                return true;
-            if ((currentScore & CellValue.Diag1) == CellValue.Diag1)
-                return true;
-            if ((currentScore & CellValue.Diag2) == CellValue.Diag2)
-                return true;
-
-            return false;
+            case -1:
+                cardscript.visualcard.transform.position = stack_card_spawn.position;
+                break;
+            case 1:
+                cardscript.visualcard.transform.position = opponent_card_spawn.position;
+                break;
+            case 0:
+                cardscript.visualcard.transform.position = me_card_spawn.position;
+                break;
         }
+        
+        
+        
+    }
 
-        [ClientRpc]
-        public void RpcUpdateCell(CellValue cellValue, NetworkIdentity player)
+            [ClientRpc]
+    public void DeletePlayerCard(NetworkIdentity player, int siblingIndex, int row, bool is_opponent)
+    {
+        if (!player.isLocalPlayer) return;
+        else if (is_opponent)
         {
-            MatchCells[cellValue].SetPlayer(player);
-        }
-
-        [ClientRpc]
-        public void RpcShowWinner(NetworkIdentity winner)
-        {
-            foreach (CellGUI cellGUI in MatchCells.Values)
-                cellGUI.GetComponent<Button>().interactable = false;
-
-            if (winner == null)
+            switch (row)
             {
-                gameText.text = "Draw!";
-                gameText.color = Color.yellow;
+                case 1:
+                    opponent_attack_players.transform.GetChild(siblingIndex).GetComponent<PlayerCard>().delete();
+                    break;
+                case 0:
+                    opponent_defence_players.transform.GetChild(siblingIndex).GetComponent<PlayerCard>().delete();
+                    break;
             }
-            else if (winner.gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
+        }
+        else
+        {
+            switch (row)
             {
-                gameText.text = "Winner!";
-                gameText.color = Color.blue;
-            }
-            else
-            {
-                gameText.text = "Loser!";
-                gameText.color = Color.red;
-            }
-
-            exitButton.gameObject.SetActive(true);
-            playAgainButton.gameObject.SetActive(true);
-        }
-
-        // Assigned in inspector to ReplayButton::OnClick
-        [ClientCallback]
-        public void RequestPlayAgain()
-        {
-            playAgainButton.gameObject.SetActive(false);
-            CmdPlayAgain();
-        }
-
-        [Command(requiresAuthority = false)]
-        public void CmdPlayAgain(NetworkConnectionToClient sender = null)
-        {
-            if (!playAgain)
-                playAgain = true;
-            else
-            {
-                playAgain = false;
-                RestartGame();
+                case 1:
+                    me_attack_players.transform.GetChild(siblingIndex).GetComponent<PlayerCard>().delete();
+                    break;
+                case 0:
+                    me_defence_players.transform.GetChild(siblingIndex).GetComponent<PlayerCard>().delete();
+                    break;
             }
         }
+    }
 
-        [ServerCallback]
-        public void RestartGame()
-        {
-            foreach (CellGUI cellGUI in MatchCells.Values)
-                cellGUI.SetPlayer(null);
-
-            boardScore = CellValue.None;
-
-            NetworkIdentity[] keys = new NetworkIdentity[matchPlayerData.Keys.Count];
-            matchPlayerData.Keys.CopyTo(keys, 0);
-
-            foreach (NetworkIdentity identity in keys)
-            {
-                MatchPlayerData mpd = matchPlayerData[identity];
-                mpd.currentScore = CellValue.None;
-                matchPlayerData[identity] = mpd;
-            }
-
-            RpcRestartGame();
-
-            startingPlayer = startingPlayer == player1 ? player2 : player1;
-            currentPlayer = startingPlayer;
-        }
-
-        [ClientRpc]
-        public void RpcRestartGame()
-        {
-            foreach (CellGUI cellGUI in MatchCells.Values)
-                cellGUI.SetPlayer(null);
-
-            exitButton.gameObject.SetActive(false);
-            playAgainButton.gameObject.SetActive(false);
-        }
-
-        // Assigned in inspector to BackButton::OnClick
-        [Client]
-        public void RequestExitGame()
-        {
-            exitButton.gameObject.SetActive(false);
-            playAgainButton.gameObject.SetActive(false);
-            CmdRequestExitGame();
-        }
-
-        [Command(requiresAuthority = false)]
-        public void CmdRequestExitGame(NetworkConnectionToClient sender = null)
-        {
-            StartCoroutine(ServerEndMatch(sender, false));
-        }
-
-        [ServerCallback]
-        public void OnPlayerDisconnected(NetworkConnectionToClient conn)
-        {
-            // Check that the disconnecting client is a player in this match
-            if (player1 == conn.identity || player2 == conn.identity)
-                StartCoroutine(ServerEndMatch(conn, true));
-        }
-
-        [ServerCallback]
-        public IEnumerator ServerEndMatch(NetworkConnectionToClient conn, bool disconnected)
-        {
-            RpcExitGame();
-
-            canvasController.OnPlayerDisconnected -= OnPlayerDisconnected;
-
-            // Wait for the ClientRpc to get out ahead of object destruction
-            yield return new WaitForSeconds(0.1f);
-
-            // Mirror will clean up the disconnecting client so we only need to clean up the other remaining client.
-            // If both players are just returning to the Lobby, we need to remove both connection Players
-
-            if (!disconnected)
-            {
-                NetworkServer.RemovePlayerForConnection(player1.connectionToClient, true);
-                CanvasController.waitingConnections.Add(player1.connectionToClient);
-
-                NetworkServer.RemovePlayerForConnection(player2.connectionToClient, true);
-                CanvasController.waitingConnections.Add(player2.connectionToClient);
-            }
-            else if (conn == player1.connectionToClient)
-            {
-                // player1 has disconnected - send player2 back to Lobby
-                NetworkServer.RemovePlayerForConnection(player2.connectionToClient, true);
-                CanvasController.waitingConnections.Add(player2.connectionToClient);
-            }
-            else if (conn == player2.connectionToClient)
-            {
-                // player2 has disconnected - send player1 back to Lobby
-                NetworkServer.RemovePlayerForConnection(player1.connectionToClient, true);
-                CanvasController.waitingConnections.Add(player1.connectionToClient);
-            }
-
-            // Skip a frame to allow the Removal(s) to complete
-            yield return null;
-
-            // Send latest match list
-            canvasController.SendMatchList();
-
-            NetworkServer.Destroy(gameObject);
-        }
-
-        [ClientRpc]
-        public void RpcExitGame()
-        {
-            canvasController.OnMatchEnded();
-        }
+    [ClientRpc]
+    public void RpcExitGame()
+    {
+        canvasController.OnMatchEnded();
     }
 }

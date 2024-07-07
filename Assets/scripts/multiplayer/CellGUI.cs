@@ -1,47 +1,45 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Mirror;
 
-namespace Mirror.Examples.MultipleMatch
+public class CellGUI : MonoBehaviour
 {
-    public class CellGUI : MonoBehaviour
+    public MatchController matchController;
+    public CellValue cellValue;
+
+    [Header("GUI References")]
+    public Image image;
+    public Button button;
+
+    [Header("Diagnostics - Do Not Modify")]
+    public NetworkIdentity playerIdentity;
+
+    public void Awake()
     {
-        public MatchController matchController;
-        public CellValue cellValue;
+        matchController.MatchCells.Add(cellValue, this);
+    }
 
-        [Header("GUI References")]
-        public Image image;
-        public Button button;
+    [ClientCallback]
+    public void MakePlay()
+    {
+        if (matchController.currentPlayer.isLocalPlayer)
+            matchController.CmdMakePlay(cellValue);
+    }
 
-        [Header("Diagnostics - Do Not Modify")]
-        public NetworkIdentity playerIdentity;
-
-        public void Awake()
+    [ClientCallback]
+    public void SetPlayer(NetworkIdentity playerIdentity)
+    {
+        if (playerIdentity != null)
         {
-            matchController.MatchCells.Add(cellValue, this);
+            this.playerIdentity = playerIdentity;
+            image.color = this.playerIdentity.isLocalPlayer ? Color.blue : Color.red;
+            button.interactable = false;
         }
-
-        [ClientCallback]
-        public void MakePlay()
+        else
         {
-            if (matchController.currentPlayer.isLocalPlayer)
-                matchController.CmdMakePlay(cellValue);
-        }
-
-        [ClientCallback]
-        public void SetPlayer(NetworkIdentity playerIdentity)
-        {
-            if (playerIdentity != null)
-            {
-                this.playerIdentity = playerIdentity;
-                image.color = this.playerIdentity.isLocalPlayer ? Color.blue : Color.red;
-                button.interactable = false;
-            }
-            else
-            {
-                this.playerIdentity = null;
-                image.color = Color.white;
-                button.interactable = true;
-            }
+            this.playerIdentity = null;
+            image.color = Color.white;
+            button.interactable = true;
         }
     }
 }

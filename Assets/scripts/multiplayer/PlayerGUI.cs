@@ -1,17 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Mirror;
 
-namespace Mirror.Examples.MultipleMatch
+public class PlayerGUI : MonoBehaviour
 {
-    public class PlayerGUI : MonoBehaviour
-    {
-        public Text playerName;
+    public Text playerName;
 
-        [ClientCallback]
-        public void SetPlayerInfo(PlayerInfo info)
-        {
-            playerName.text = $"Player {info.playerIndex}";
-            playerName.color = info.ready ? Color.green : Color.red;
-        }
+    [ClientCallback]
+    public void SetPlayerInfo(PlayerInfo info)
+    {
+        playerName.text = $"Player {info.playerIndex}";
+        playerName.color = info.ready ? Color.green : Color.red;
     }
 }

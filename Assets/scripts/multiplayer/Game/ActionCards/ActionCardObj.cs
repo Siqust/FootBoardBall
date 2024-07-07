@@ -1,8 +1,9 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "Action", menuName = "ActionCard", order = 1)]
-public class ActionCard : ScriptableObject
+public class ActionCardObj : ScriptableObject
 {
-    public CardType cardtype;
+    public ActionCardType cardtype;
+    public ActionAbility ability;
     public int modif;
 }
