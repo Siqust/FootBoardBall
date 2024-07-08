@@ -13,33 +13,37 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public bool Placed = false;
     [HideInInspector] public int siblingindex;
     private bool stopEndDrag;
-    [HideInInspector] public Image CardImage;
+    [HideInInspector] public RawImage CardImage;
     [HideInInspector] public bool dragging;
+    [HideInInspector] public Vector2 visualcard_pos;
     [SerializeField] private GameObject visualcard_prefab;
     [SerializeField] public GameObject visualcard;
     [HideInInspector] public Transform visualcardparent;
     [HideInInspector] public Transform ParentAfterDrag;
     private void Start()
     {
-        CardImage = GetComponent<Image>();
+        CardImage = GetComponent<RawImage>();
         visualcardparent = GameObject.FindWithTag("PlayerCards").transform;
         visualcard = Instantiate(visualcard_prefab, visualcardparent);
-        if (!CanDrag && Placed)
-        {
-            visualcard.transform.position = new Vector2(350, 460); //OPPONENT COORDS
-        }
-        else
-        {
-            visualcard.transform.position = new Vector2(700, -100);
-        }
-        Color selfcolor = transform.GetComponent<Image>().color;
-        visualcard.GetComponent<Image>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 255);
-        transform.GetComponent<Image>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
+        if (visualcard_pos != null) { visualcard.transform.position = visualcard_pos; }
+        Color selfcolor = transform.GetComponent<RawImage>().color;
+        visualcard.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 255);
+        transform.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
         //visualcard.transform.position = transform.position;
-        visualcard.GetComponent<FollowCard>().target_card = transform;
+        FollowCard visualcardscript = visualcard.GetComponent<FollowCard>();
+        visualcardscript.target_card = transform;
+        visualcardscript.player_attack_text.gameObject.SetActive(true); visualcardscript.player_defence_text.gameObject.SetActive(true);
+        visualcardscript.player_attack_text.text = matchcontroller.players_cards[index].attack.ToString();
+        visualcardscript.player_defence_text.text = matchcontroller.players_cards[index].defence.ToString();
         visualcard.transform.SetAsLastSibling();
+        
         dragging = false;
     }
+    private void Update()
+    {
+        if (dragging && !matchcontroller.currentPlayer.isLocalPlayer) { OnEndDrag(null); }
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!CanDrag)
@@ -67,10 +71,9 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (stopEndDrag || !CanDrag) return;
+        if (stopEndDrag || !CanDrag || !dragging) return;
         if (ParentAfterDrag == null) { return; }
-        if (matchcontroller.currentPlayer != null) { if (!matchcontroller.currentPlayer.isLocalPlayer) return; }
-
+        //if (matchcontroller.currentPlayer != null) { if (!matchcontroller.currentPlayer.isLocalPlayer) return; }
 
         dragging = false;
         visualcard.transform.SetAsFirstSibling();
@@ -102,7 +105,7 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public void offModifsImages()
     {
         Transform obj = transform.GetChild(transform.childCount - 1);
-        obj.GetComponent<Image>().enabled = false;
+        obj.GetComponent<RawImage>().enabled = false;
         StartCoroutine(Deletevisualcard(obj));
     }
     IEnumerator Deletevisualcard(Transform obj)

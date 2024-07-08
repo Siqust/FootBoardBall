@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using Mirror;
 
 
@@ -19,17 +20,27 @@ public class MatchController : NetworkBehaviour
     internal readonly SyncDictionary<NetworkIdentity, MatchPlayerData> matchPlayerData = new SyncDictionary<NetworkIdentity, MatchPlayerData>();
     internal readonly Dictionary<CellValue, CellGUI> MatchCells = new Dictionary<CellValue, CellGUI>();
 
+    [Header("move things SERVER")]
+    [SerializeField] private float timer;
+    [SerializeField] private Slider timer_slider;
+
     [Header("Field Players")]
     public RowPlayers me_attack_players;
     public RowPlayers me_defence_players;
     public RowPlayers opponent_attack_players;
     public RowPlayers opponent_defence_players;
 
-    [Header("Rows Modifiers")]
+    [Header("Rows Modifiers Client")]
     public RowModifiers opponent_defence_modifs;
     public RowModifiers opponent_attack_modifs;
     public RowModifiers me_attack_modifs;
     public RowModifiers me_defence_modifs;
+
+    [Header("Row Scores Cient")]
+    public TextMeshProUGUI me_attack_score;
+    public TextMeshProUGUI me_defence_score;
+    public TextMeshProUGUI opponent_attack_score;
+    public TextMeshProUGUI opponent_defence_score;
 
 
     [Header("Players' Cards")]
@@ -38,9 +49,13 @@ public class MatchController : NetworkBehaviour
     [SerializeField] private List<PlayerCardObj> player2_players; //
     [SerializeField] private List<ActionCardObj> player2_actions; //
 
-    [Header("GameRows")]
+    [Header("GameRows SERVER")]
     [SerializeField] private Row[] player1_field_cards = new Row[2]; //
     [SerializeField] private Row[] player2_field_cards = new Row[2]; //
+
+    [Header("Row Modifiers SERVER")]
+    [SerializeField] List<ActionCardObj>[] player1_row_modifiers;
+    [SerializeField] List<ActionCardObj>[] player2_row_modifiers;
 
     [Header("Cards")]
     public PlayerCardObj[] players_cards;
@@ -55,7 +70,6 @@ public class MatchController : NetworkBehaviour
     [SerializeField] private Transform opponent_card_spawn;
     [SerializeField] private Transform stack_card_spawn;
     [SerializeField] private Transform me_card_spawn;
-
 
     CellValue boardScore = CellValue.None;
     [SerializeField] bool playAgain = false;
@@ -79,11 +93,36 @@ public class MatchController : NetworkBehaviour
     public NetworkIdentity currentPlayer;
     void Awake()
     {
-        player1_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
-        player2_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
-        player1_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
-        player2_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>();
+        timer = 60f;
+        player1_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
+        player2_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
+        player1_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
+        player2_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
+
+        player1_row_modifiers = new List<ActionCardObj>[2];
+        player2_row_modifiers = new List<ActionCardObj>[2];
+        player1_row_modifiers[0] = new List<ActionCardObj>();
+        player1_row_modifiers[1] = new List<ActionCardObj>();
+        player2_row_modifiers[0] = new List<ActionCardObj>();
+        player2_row_modifiers[1] = new List<ActionCardObj>();
+
         canvasController = FindObjectOfType<CanvasController>();
+    }
+    private void FixedUpdate()
+    {
+        timer -= Time.deltaTime;
+        if (timer <= 0)
+        {
+            MoveMade();
+        }
+        UpdateGameTimer(timer);
+        
+    }
+
+    [ClientRpc]
+    void UpdateGameTimer(float time)
+    {
+        timer_slider.value = (60 - time) / 60;
     }
     #region ServerPart
     public override void OnStartServer()
@@ -118,7 +157,7 @@ public class MatchController : NetworkBehaviour
         }
         for (int i = 0; i < 5; i++)
         {
-            SpawnActionCard(player1, 1, -1, -1, false);
+            SpawnActionCard(player1, 2, -1, -1, false, ActionCardSpawnType.Init);
             player1_actions.Add(actions_cards[0]);
         }
 
@@ -129,7 +168,7 @@ public class MatchController : NetworkBehaviour
         }
         for (int i = 0; i < 5; i++)
         {
-            SpawnActionCard(player2, 1, -1, -1, false);
+            SpawnActionCard(player2, 1, -1, -1, false, ActionCardSpawnType.Init);
             player2_actions.Add(actions_cards[0]);
         }
     }
@@ -173,12 +212,19 @@ public class MatchController : NetworkBehaviour
             winCountOpponent.text = $"Player {matchPlayerData.playerIndex}\n{matchPlayerData.wins}";
     }
 
+    void CheckWin()
+    {
+        //if (player1_field_cards[0].cards.Count == 4 )
+    }
     [Command(requiresAuthority = false)]
     public void MakePlay(MoveType movetype, int cardindex, MoveMessage movemessage, NetworkConnectionToClient sender = null)
-    {
-        NetworkIdentity opponent =  player1.isLocalPlayer ? player2 : player1;
+    { 
         if (sender.identity != currentPlayer)
             return;
+        //if (movetype is MoveType.Player)
+        //{
+        //    if ()
+        //}
         switch (movetype)
         {
             case MoveType.Player:
@@ -188,133 +234,228 @@ public class MatchController : NetworkBehaviour
                 break;
             case MoveType.ActionOnPlayer:
                 print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON PLAYER", players_cards[cardindex] ,"IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE", "ON PLACE ", movemessage.col_to, "TO", movemessage.is_opponent ? "OPPONENT": "SELF"));
-                ActionCardObj apCard = actions_cards[cardindex];
-                switch (apCard.cardtype)
+                if (!(actions_cards[cardindex].cardtype == ActionCardType.ActPlayerLT || actions_cards[cardindex].cardtype == ActionCardType.ActPlayerOT)) { Debug.LogError("not player action card"); return; }
+                PlayedWithActionOnPlayer(cardindex, movemessage);
+                break;
+            case MoveType.ActionOnRow:
+                if (!(actions_cards[cardindex].cardtype == ActionCardType.ActRow)) { Debug.LogError("not row action card"); return; }
+                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON ROW IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE"));
+                PlayedWithActionOnRow(cardindex,movemessage);
+                break;
+        }
+
+        int[] scores = CountScores();
+        int player1_attack = scores[0];
+        int player1_defence = scores[1];
+        int player2_attack = scores[2];
+        int player2_defence = scores[3];
+
+
+        UpdateScores(player1,player1_defence, player1_attack, player2_defence, player2_attack);
+
+        MoveMade();
+    }
+    void MoveMade()
+    {
+        currentPlayer = currentPlayer == player1 ? player2 : player1;
+        timer = 20f;
+    }
+    [ClientRpc]
+    void EndGame()
+    {
+
+    }
+    int[] CountScores()
+    {
+        List<int>[] player1_scores = new List<int>[2];
+        List<int>[] player2_scores = new List<int>[2];
+        player1_scores[0] = new List<int>();
+        player1_scores[1] = new List<int>();
+        player2_scores[0] = new List<int>();
+        player2_scores[1] = new List<int>();
+        Dictionary<PlayerCardObj, List<ActionCardObj>> list = player1_field_cards[0].cards;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var player = list.Keys.ToList()[i];
+            player1_scores[0].Add(player.defence);
+            for (int j = 0; j < list[player].Count; j++)
+            {
+                var action = list[player][j];
+                player1_scores[0][i] += action.modif;
+            }
+        }
+
+        list = player1_field_cards[1].cards;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var player = list.Keys.ToList()[i];
+            player1_scores[1].Add(player.attack);
+            for (int j = 0; j < list[player].Count; j++)
+            {
+                var action = list[player][j];
+                player1_scores[1][i] += action.modif;
+            }
+        }
+        list = player2_field_cards[0].cards;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var player = list.Keys.ToList()[i];
+            player2_scores[0].Add(player.defence);
+            for (int j = 0; j < list[player].Count; j++)
+            {
+                var action = list[player][j];
+                player2_scores[0][i] += action.modif;
+            }
+        }
+        list = player2_field_cards[1].cards;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var player = list.Keys.ToList()[i];
+            player2_scores[1].Add(player.attack);
+            for (int j = 0; j < list[player].Count; j++)
+            {
+                var action = list[player][j];
+                player2_scores[1][i] += action.modif;
+            }
+        }
+        int player1_defence = 0;
+        for (int i = 0; i < player1_scores[0].Count; i++) { player1_defence += player1_scores[0][i]; }
+        for (int i =0; i<player1_row_modifiers[0].Count; i++) { player1_defence += player1_row_modifiers[0][i].modif; }
+
+        int player1_attack = 0;
+        for (int i = 0; i < player1_scores[1].Count; i++) { player1_attack += player1_scores[1][i]; }
+        for (int i = 0; i < player1_row_modifiers[1].Count; i++) { player1_attack += player1_row_modifiers[1][i].modif; }
+
+        int player2_defence = 0;
+        for (int i = 0; i < player2_scores[0].Count; i++) { player2_defence += player2_scores[0][i]; }
+        for (int i = 0; i < player2_row_modifiers[0].Count; i++) { player2_defence += player2_row_modifiers[0][i].modif; }
+
+        int player2_attack = 0;
+        for (int i = 0; i < player2_scores[1].Count; i++) { player2_attack += player2_scores[1][i]; }
+        for (int i = 0; i < player2_row_modifiers[1].Count; i++) { player2_attack += player2_row_modifiers[1][i].modif; }
+
+        return new int[4] { player1_attack, player1_defence, player2_attack, player2_defence };
+    }
+
+    [ClientRpc]
+    void UpdateScores(NetworkIdentity player1,int player1_defence, int player1_attack, int player2_defence, int player2_attack)
+    {
+        if (player1.isLocalPlayer)
+        {
+            me_attack_score.text = player1_attack.ToString();
+            me_defence_score.text = player1_defence.ToString();
+            opponent_attack_score.text = player2_attack.ToString();
+            opponent_defence_score.text = player2_defence.ToString();
+        }
+        else
+        {
+            me_attack_score.text = player2_attack.ToString();
+            me_defence_score.text = player2_defence.ToString();
+            opponent_attack_score.text = player1_attack.ToString();
+            opponent_defence_score.text = player1_defence.ToString();
+        }
+    }
+    void PlayedWithActionOnRow(int cardindex, MoveMessage movemessage)
+    {
+        if (currentPlayer == player1)
+        {
+            if (movemessage.is_opponent)
+            {
+                player2_row_modifiers[movemessage.row_to].Add(actions_cards[cardindex]);
+            }
+            else
+            {
+                player1_row_modifiers[movemessage.row_to].Add(actions_cards[cardindex]);
+            }
+            SpawnActionCard(player2, cardindex, movemessage.row_to, -1, !movemessage.is_opponent, ActionCardSpawnType.Row);
+        }
+        else
+        {
+            {
+                if (movemessage.is_opponent)
                 {
-                    case ActionCardType.ActPlayerOT:
-                        switch (apCard.ability)
-                        {
-                            case ActionAbility.RemovePlayer:
-                                if (currentPlayer == player1)
-                                {
-                                    if (movemessage.is_opponent)
-                                    {
-                                        player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                    }
-                                    else
-                                    {
-                                        player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                    }
-                                    DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
-                                    DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
-                                }
-                                else
-                                {
-                                    if (movemessage.is_opponent)
-                                    {
-                                        player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                    }
-                                    else
-                                    {
-                                        player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                    }
-                                    DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
-                                    DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
-                                }
-                                break;
-                        }
-                        break;
-                    case ActionCardType.ActPlayerLT:
+                    player1_row_modifiers[movemessage.row_to].Add(actions_cards[cardindex]);
+                }
+                else
+                {
+                    player2_row_modifiers[movemessage.row_to].Add(actions_cards[cardindex]);
+                }
+            }
+            SpawnActionCard(player1, cardindex, movemessage.row_to, -1, !movemessage.is_opponent, ActionCardSpawnType.Row);
+        }
+    }
+    void PlayedWithActionOnPlayer(int cardindex,MoveMessage movemessage)
+    {
+        ActionCardObj apCard = actions_cards[cardindex];
+        switch (apCard.cardtype)
+        {
+            case ActionCardType.ActPlayerOT:
+                switch (apCard.ability)
+                {
+                    case ActionAbility.RemovePlayer:
                         if (currentPlayer == player1)
                         {
                             if (movemessage.is_opponent)
                             {
-                                player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                                player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
                             }
                             else
                             {
-                                player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                                player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
                             }
-                            SpawnActionCard(player2, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent);
+                            DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                            DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
                         }
                         else
                         {
                             if (movemessage.is_opponent)
                             {
-                                Debug.Log(("TO CARD:",(movemessage.row_to, players_cards[movemessage.card_index])));
-                                var keys = player1_field_cards[movemessage.row_to].cards.Keys.ToList();
-                                for (int i=0; i < keys.Count; i++)
-                                {
-                                    Debug.Log(("Keys:",keys[i]));
-                                }
-                                player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                                player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
                             }
                             else
                             {
-                                player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                                player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
                             }
-                            SpawnActionCard(player1, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent);
+                            DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                            DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
                         }
                         break;
                 }
                 break;
-            #region pass
-            /*
-            if (currentPlayer == player1) { 
-                switch (apCard.cardtype)
+            case ActionCardType.ActPlayerLT:
+                if (currentPlayer == player1)
                 {
-                    case ActionCardType.ActPlayerOT:
-                        switch (apCard.ability) {
-
-                            case ActionAbility.RemovePlayer:
-                                if (movemessage.is_opponent)
-                                {
-                                    player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                }
-                                else
-                                {
-                                    player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                }
-                                DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
-                                DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
-                                break;
-                        }
-                        break;
+                    if (movemessage.is_opponent)
+                    {
+                        player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                    }
+                    else
+                    {
+                        player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                    }
+                    SpawnActionCard(player2, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent, ActionCardSpawnType.Player);
                 }
-            }
-            else
-            {
-                switch (apCard.cardtype)
+                else
                 {
-                    case ActionCardType.ActPlayerOT:
-                        switch (apCard.ability)
+                    if (movemessage.is_opponent)
+                    {
+                        Debug.Log(("TO CARD:", (movemessage.row_to, players_cards[movemessage.card_index])));
+                        var keys = player1_field_cards[movemessage.row_to].cards.Keys.ToList();
+                        for (int i = 0; i < keys.Count; i++)
                         {
-                            case ActionAbility.RemovePlayer:
-                                if (movemessage.is_opponent)
-                                {
-                                    player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                }
-                                else
-                                {
-                                    player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
-                                }
-                                DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
-                                DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
-                                break;
+                            Debug.Log(("Keys:", keys[i]));
                         }
-                        break;
+                        player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                    }
+                    else
+                    {
+                        player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                    }
+                    SpawnActionCard(player1, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent, ActionCardSpawnType.Player);
                 }
-            }*/
-            #endregion
-            case MoveType.ActionOnRow:
-                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON ROW IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE"));
                 break;
         }
-
-        currentPlayer = currentPlayer == player1 ? player2 : player1;
     }
-
-
     void PlayedWithPlayer(PlayerCardObj card, int cardindex, MoveMessage movemessage)
     {
         if (currentPlayer == player1)
@@ -368,6 +509,7 @@ public class MatchController : NetworkBehaviour
             }
         }
     }
+
     [ClientRpc]
     public void RpcShowWinner(NetworkIdentity winner)
     {
@@ -609,109 +751,147 @@ public class MatchController : NetworkBehaviour
             card.transform.SetParent(player_players_cards_holder);
             cardscript.Placed = false;
             cardscript.CanDrag = true;
+            ChangeVisualPlayerCardPos(cardscript, -1);
         }
         else if (row == 1)
         {
             card.transform.SetParent(opponent_attack_players.transform);
             cardscript.Placed = true;
             cardscript.CanDrag = false;
+            ChangeVisualPlayerCardPos(cardscript, 1);
         }
         else if (row == 0)
         {
             card.transform.SetParent(opponent_defence_players.transform);
             cardscript.Placed = true;
             cardscript.CanDrag = false;
-        }
-        else
-        {
-            Debug.Log("AAAAAAAAAAAAAAAAAA");
+            ChangeVisualPlayerCardPos(cardscript, 1);
         }
         card.transform.localScale = Vector3.one;
         cardscript.index = cardindex;
         cardscript.visualcardparent = visual_cards_holder;
         cardscript.matchcontroller = transform.GetComponent<MatchController>();
         Color[] colors = { Color.cyan, Color.green, Color.red, Color.yellow, Color.blue, Color.magenta };
-        card.GetComponent<Image>().color = colors[UnityEngine.Random.Range(0, colors.Length)];
+        card.GetComponent<RawImage>().color = colors[UnityEngine.Random.Range(0, colors.Length)];
         var plrmodifs = card.AddComponent<PlayerModifs>();
         plrmodifs.matchcontroller = transform.GetComponent<MatchController>();
         
     }
 
     [ClientRpc]
-    public void SpawnActionCard(NetworkIdentity player,int cardindex, int row, int col, bool is_opponent)
+    public void SpawnActionCard(NetworkIdentity player,int cardindex, int row, int col, bool is_opponent, ActionCardSpawnType spawnType)
     {
         
         if (!player.isLocalPlayer) { return; }
         ActionCardObj obj = actions_cards[cardindex];
         GameObject card = Instantiate(ActionCardPrefab);
         ActionCard cardscript = card.GetComponent<ActionCard>();
-        if (row == -1)
-        {
-            card.transform.SetParent(player_actions_cards_holder);
-            StartCoroutine(ChangeVisualCardPos(cardscript, -1));
-        }
-        else
-        {
-            if (is_opponent)
-            {
-                switch (row)
+        switch (spawnType) {
+            case ActionCardSpawnType.Init:
+                card.transform.SetParent(player_actions_cards_holder);
+                cardscript.CanDrag = true;
+                ChangeVisualActionCardPos(cardscript, -1);
+                break;
+            case ActionCardSpawnType.Player:                
+                if (is_opponent)
                 {
-                    case 1:
-                        card.transform.SetParent(opponent_attack_players.transform.GetChild(col));
-                        break;
-                    case 0:
-                        card.transform.SetParent(opponent_defence_players.transform.GetChild(col));
-                        break;
+                    switch (row)
+                    {
+                        case 1:
+                            card.transform.SetParent(opponent_attack_players.transform.GetChild(col));
+                            break;
+                        case 0:
+                            card.transform.SetParent(opponent_defence_players.transform.GetChild(col));
+                            break;
+                    }
                 }
-                StartCoroutine(ChangeVisualCardPos(cardscript, 1));
-            }
-            else
-            {
-                switch (row)
+                else
                 {
-                    case 1:
-                        card.transform.SetParent(me_attack_players.transform.GetChild(col));
-                        break;
-                    case 0:
-                        card.transform.SetParent(me_defence_players.transform.GetChild(col));
-                        break;
+                    switch (row)
+                    {
+                        case 1:
+                            card.transform.SetParent(me_attack_players.transform.GetChild(col));
+                            break;
+                        case 0:
+                            card.transform.SetParent(me_defence_players.transform.GetChild(col));
+                            break;
+                    }
                 }
-                StartCoroutine(ChangeVisualCardPos(cardscript, 1));
-            }
-            card.transform.parent.GetComponent<PlayerCard>().offModifsImages();
-            card.transform.position = card.transform.parent.position;
+                ChangeVisualActionCardPos(cardscript, 1);
+                card.transform.parent.GetComponent<PlayerCard>().offModifsImages();
+                card.transform.position = card.transform.parent.position;
+                break;
+
+            case ActionCardSpawnType.Row:
+                if (is_opponent)
+                {
+                    switch (row) {
+                        case 1:
+                            card.transform.SetParent(me_attack_modifs.transform);
+                            break;
+                        case 0:
+                            card.transform.SetParent(me_defence_modifs.transform);
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (row)
+                    {
+                        case 1:
+                            card.transform.SetParent(opponent_attack_modifs.transform);
+                            break;
+                        case 0:
+                            card.transform.SetParent(opponent_defence_modifs.transform);
+                            break;
+                    }
+                }
+                ChangeVisualActionCardPos(cardscript, 1);
+                card.transform.position = card.transform.parent.position;
+                cardscript.CanDrag = false;
+                break;
         }
         card.transform.localScale = Vector3.one;
         Color[] colors = { Color.cyan, Color.green, Color.red, Color.yellow, Color.blue, Color.magenta };
-        card.GetComponent<Image>().color = colors[UnityEngine.Random.Range(0, colors.Length)];
+        card.GetComponent<RawImage>().color = colors[UnityEngine.Random.Range(0, colors.Length)];
         cardscript.index = cardindex;
         cardscript.matchcontroller = transform.GetComponent<MatchController>();
         cardscript.cardtype = obj.cardtype;
         cardscript.visualcardparent = visual_cards_holder;
 
     }
-    IEnumerator ChangeVisualCardPos(ActionCard cardscript, int is_opponent)
+    void ChangeVisualActionCardPos(ActionCard cardscript, int is_opponent)
     {
-        yield return null;
-        Debug.Log("changed pos");
         switch (is_opponent)
         {
             case -1:
-                cardscript.visualcard.transform.position = stack_card_spawn.position;
+                cardscript.visualcard_pos = stack_card_spawn.position;
                 break;
             case 1:
-                cardscript.visualcard.transform.position = opponent_card_spawn.position;
+                cardscript.visualcard_pos = opponent_card_spawn.position;
                 break;
             case 0:
-                cardscript.visualcard.transform.position = me_card_spawn.position;
+                cardscript.visualcard_pos = me_card_spawn.position;
                 break;
         }
-        
-        
-        
+    }
+    void ChangeVisualPlayerCardPos(PlayerCard cardscript, int is_opponent)
+    {
+        switch (is_opponent)
+        {
+            case -1:
+                cardscript.visualcard_pos = stack_card_spawn.position;
+                break;
+            case 1:
+                cardscript.visualcard_pos = opponent_card_spawn.position;
+                break;
+            case 0:
+                cardscript.visualcard_pos = me_card_spawn.position;
+                break;
+        }
     }
 
-            [ClientRpc]
+    [ClientRpc]
     public void DeletePlayerCard(NetworkIdentity player, int siblingIndex, int row, bool is_opponent)
     {
         if (!player.isLocalPlayer) return;

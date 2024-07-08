@@ -15,17 +15,17 @@ public class PlayerModifs : MonoBehaviour, IDropHandler
     }
     public void OnDrop(PointerEventData eventData)
     {
-        Debug.Log("CardDropped");
         GameObject obj = eventData.pointerDrag;
         if (card.Placed && obj.GetComponent<ActionCard>() != null)
         {
             ActionCard putted_card = obj.GetComponent<ActionCard>();
+            if (!(putted_card.cardtype == ActionCardType.ActPlayerLT || putted_card.cardtype == ActionCardType.ActPlayerOT)) return;
 
             if (!putted_card.dragging) {return;}
 
             //Transform parentbeforedrag = putted_card.ParentAfterDrag;
             putted_card.ParentAfterDrag = transform;
-            obj.GetComponent<Image>().enabled = false;
+            obj.GetComponent<RawImage>().enabled = false;
             StartCoroutine(TurnOffVisualCard(putted_card.visualcard));
 
 
@@ -48,6 +48,6 @@ public class PlayerModifs : MonoBehaviour, IDropHandler
     private IEnumerator TurnOffVisualCard(GameObject visualcard)
     {
         yield return new WaitForSeconds(0.5f);
-        visualcard.GetComponent<Image>().enabled = false;
+        visualcard.GetComponent<RawImage>().enabled = false;
     }
 }

@@ -32,6 +32,13 @@ public struct MoveMessage
     public bool is_opponent;
     public int card_index;
 }
+public enum ActionCardSpawnType : byte
+{
+    Init,
+    Player,
+    Row,
+    Field
+}
 
 
 /// <summary>

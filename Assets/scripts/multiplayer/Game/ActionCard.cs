@@ -13,24 +13,40 @@ public class ActionCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public bool CanDrag;
     [HideInInspector] public int siblingindex;
     private bool stopEndDrag;
-    Image CardImage;
+    RawImage CardImage;
     public bool dragging;
+    [HideInInspector] public Vector2 visualcard_pos;
     [SerializeField] private GameObject visualcard_prefab;
     [HideInInspector] public GameObject visualcard;
     [HideInInspector] public Transform visualcardparent;
     [HideInInspector] public Transform ParentAfterDrag;
     private void Start()
     {
-        CardImage = GetComponent<Image>();
+        CardImage = GetComponent<RawImage>();
         visualcardparent = GameObject.FindWithTag("PlayerCards").transform;
-        CanDrag = true;
         visualcard = Instantiate(visualcard_prefab, visualcardparent);
-        Color selfcolor = transform.GetComponent<Image>().color;
-        visualcard.GetComponent<Image>().color = new Color(selfcolor.r,selfcolor.g,selfcolor.b, 255);
-        transform.GetComponent<Image>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
-        visualcard.GetComponent<FollowCard>().target_card = transform;
+        if (visualcard_pos != null) { visualcard.transform.position = visualcard_pos; }
+        Color selfcolor = transform.GetComponent<RawImage>().color;
+        visualcard.GetComponent<RawImage>().color = new Color(selfcolor.r,selfcolor.g,selfcolor.b, 255);
+        transform.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
+        FollowCard visualcardscript = visualcard.GetComponent<FollowCard>();
+        visualcardscript.target_card = transform;
+        visualcardscript.ActionModifierText.gameObject.SetActive(true); visualcardscript.ActionTypeText.gameObject.SetActive(true);
+        if (cardtype == ActionCardType.ActPlayerLT || cardtype == ActionCardType.ActPlayerOT)
+        {
+            visualcardscript.ActionTypeText.text = "ÈÃÐÎÊ";
+        }
+        else if (cardtype == ActionCardType.ActRow)
+        {
+            visualcardscript.ActionTypeText.text = "ÐßÄ";
+        }
+        visualcardscript.ActionModifierText.text = matchcontroller.actions_cards[index].modif.ToString();
         visualcard.transform.SetAsLastSibling();
         dragging = false;
+    }
+    private void Update()
+    {
+        if (dragging && !matchcontroller.currentPlayer.isLocalPlayer) { OnEndDrag(null); }
     }
     public void OnBeginDrag(PointerEventData eventData)
     {
@@ -59,7 +75,7 @@ public class ActionCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     public void OnEndDrag(PointerEventData eventData)
     {
         if (stopEndDrag) return;
-        if (matchcontroller.currentPlayer != null) { if (!matchcontroller.currentPlayer.isLocalPlayer) return; }
+        //if (matchcontroller.currentPlayer != null) { if (!matchcontroller.currentPlayer.isLocalPlayer) return; }
 
 
         dragging = false;

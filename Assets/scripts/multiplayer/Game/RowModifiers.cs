@@ -17,6 +17,7 @@ public class RowModifiers : MonoBehaviour, IDropHandler
         if (obj.GetComponent<ActionCard>() != null)
         {
             ActionCard card = obj.GetComponent<ActionCard>();
+            if (card.cardtype != ActionCardType.ActRow) { return; }
 
             if (!card.dragging) { return; }
             Transform parentbeforedrag = card.ParentAfterDrag;
