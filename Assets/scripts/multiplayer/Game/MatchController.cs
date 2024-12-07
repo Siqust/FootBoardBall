@@ -20,6 +20,12 @@ public class MatchController : NetworkBehaviour
     internal readonly SyncDictionary<NetworkIdentity, MatchPlayerData> matchPlayerData = new SyncDictionary<NetworkIdentity, MatchPlayerData>();
     internal readonly Dictionary<CellValue, CellGUI> MatchCells = new Dictionary<CellValue, CellGUI>();
 
+    public GameObject Field;
+    public GameObject EndScreen;
+    public TextMeshProUGUI EndScore_Me;
+    public TextMeshProUGUI EndScore_Opponent;
+    public TextMeshProUGUI EndState;
+    public Animator animator;
     [Header("move things SERVER")]
     [SerializeField] private float timer;
     [SerializeField] private Slider timer_slider;
@@ -88,11 +94,16 @@ public class MatchController : NetworkBehaviour
     public NetworkIdentity player2;
     public NetworkIdentity startingPlayer;
 
+    private bool game_started;
+    private bool pre_end;
+    [HideInInspector] public bool ended;
 
     [SyncVar(hook = nameof(UpdateGameUI))]
     public NetworkIdentity currentPlayer;
     void Awake()
     {
+        pre_end = false;
+        ended = false;
         timer = 60f;
         player1_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
         player2_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
@@ -108,15 +119,17 @@ public class MatchController : NetworkBehaviour
 
         canvasController = FindObjectOfType<CanvasController>();
     }
-    private void FixedUpdate()
+    private void Update()
     {
-        timer -= Time.deltaTime;
-        if (timer <= 0)
+        if (!ended && game_started)
         {
-            MoveMade();
+            timer -= Time.deltaTime;
+            if (timer <= 0)
+            {
+                MoveMade();
+            }
+            UpdateGameTimer(timer);
         }
-        UpdateGameTimer(timer);
-        
     }
 
     [ClientRpc]
@@ -150,27 +163,21 @@ public class MatchController : NetworkBehaviour
             player1.gameObject.name = "OPPONENT";
         }
 
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < players_cards.Length; i++)
         {
             SpawnPlayerCard(player1, i, -1);
-            player1_players.Add(players_cards[i]);
-        }
-        for (int i = 0; i < 5; i++)
-        {
-            SpawnActionCard(player1, 2, -1, -1, false, ActionCardSpawnType.Init);
-            player1_actions.Add(actions_cards[0]);
-        }
-
-        for (int i = 0; i < 2; i++)
-        {
             SpawnPlayerCard(player2, i, -1);
+            player1_players.Add(players_cards[i]);
             player2_players.Add(players_cards[i]);
         }
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < actions_cards.Length; i++)
         {
-            SpawnActionCard(player2, 1, -1, -1, false, ActionCardSpawnType.Init);
-            player2_actions.Add(actions_cards[0]);
+            SpawnActionCard(player1, i, -1, -1, false, ActionCardSpawnType.Init);
+            SpawnActionCard(player2, i, -1, -1, false, ActionCardSpawnType.Init);
+            player1_actions.Add(actions_cards[i]);
+            player2_actions.Add(actions_cards[i]);
         }
+        game_started = true;
     }
 
     public override void OnStartClient()
@@ -193,12 +200,12 @@ public class MatchController : NetworkBehaviour
 
         if (newPlayerTurn.gameObject.GetComponent<NetworkIdentity>().isLocalPlayer)
         {
-            gameText.text = "Your Turn";
+            gameText.text = "Ваш ход";
             gameText.color = Color.blue;
         }
         else
         {
-            gameText.text = "Their Turn";
+            gameText.text = "Ход другого";
             gameText.color = Color.red;
         }
     }
@@ -212,58 +219,156 @@ public class MatchController : NetworkBehaviour
             winCountOpponent.text = $"Player {matchPlayerData.playerIndex}\n{matchPlayerData.wins}";
     }
 
-    void CheckWin()
+    bool CheckWin()
     {
-        //if (player1_field_cards[0].cards.Count == 4 )
+        if (player1_field_cards[0].cards.Count == 4 && player1_field_cards[1].cards.Count == 4) return true;
+        else if (player2_field_cards[0].cards.Count == 4 && player2_field_cards[1].cards.Count == 4) return true;
+        else return false;
     }
     [Command(requiresAuthority = false)]
     public void MakePlay(MoveType movetype, int cardindex, MoveMessage movemessage, NetworkConnectionToClient sender = null)
-    { 
+    {
+        int[] scores;
+        int player1_attack;
+        int player1_defence;
+        int player2_attack;
+        int player2_defence;
         if (sender.identity != currentPlayer)
             return;
-        //if (movetype is MoveType.Player)
-        //{
-        //    if ()
-        //}
         switch (movetype)
         {
             case MoveType.Player:
-                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH PLAYER CARD", players_cards[cardindex], "ON ROW", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE", "ON PLACE ", movemessage.col_to));
+                //print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH PLAYER CARD", players_cards[cardindex], "ON ROW", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE", "ON PLACE ", movemessage.col_to));
                 PlayerCardObj pCard = players_cards[cardindex];
                 PlayedWithPlayer(pCard, cardindex, movemessage);
                 break;
             case MoveType.ActionOnPlayer:
-                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON PLAYER", players_cards[cardindex] ,"IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE", "ON PLACE ", movemessage.col_to, "TO", movemessage.is_opponent ? "OPPONENT": "SELF"));
+                //print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON PLAYER", players_cards[cardindex] ,"IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE", "ON PLACE ", movemessage.col_to, "TO", movemessage.is_opponent ? "OPPONENT": "SELF"));
                 if (!(actions_cards[cardindex].cardtype == ActionCardType.ActPlayerLT || actions_cards[cardindex].cardtype == ActionCardType.ActPlayerOT)) { Debug.LogError("not player action card"); return; }
+                if (currentPlayer == player1)
+                {
+                    player1_actions.Remove(actions_cards[cardindex]);
+                }
+                else
+                {
+                    player2_actions.Remove(actions_cards[cardindex]);
+                }
                 PlayedWithActionOnPlayer(cardindex, movemessage);
                 break;
             case MoveType.ActionOnRow:
                 if (!(actions_cards[cardindex].cardtype == ActionCardType.ActRow)) { Debug.LogError("not row action card"); return; }
-                print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON ROW IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE"));
+                //print((currentPlayer.isLocalPlayer ? "ME" : "OPPONENT", "PLAYED WITH ACTION CARD ON ROW IN", movemessage.row_to == 1 ? "ATTACK" : "DEFENCE"));
+                if (currentPlayer == player1)
+                {
+                    player1_actions.Remove(actions_cards[cardindex]);
+                }
+                else
+                {
+                    player2_actions.Remove(actions_cards[cardindex]);
+                }
                 PlayedWithActionOnRow(cardindex,movemessage);
                 break;
         }
 
-        int[] scores = CountScores();
-        int player1_attack = scores[0];
-        int player1_defence = scores[1];
-        int player2_attack = scores[2];
-        int player2_defence = scores[3];
+        scores = CountScores();
+        player1_attack = scores[0];
+        player1_defence = scores[1];
+        player2_attack = scores[2];
+        player2_defence = scores[3];
 
 
         UpdateScores(player1,player1_defence, player1_attack, player2_defence, player2_attack);
 
+        if (CheckWin() && pre_end)
+        {
+            ended = true;
+            scores = CountScores();
+            player1_attack = scores[0];
+            player1_defence = scores[1];
+            player2_attack = scores[2];
+            player2_defence = scores[3];
+            player1_defence -= player2_attack;
+            player2_defence -= player1_attack;
+            EndGame(player1, player1_defence, player2_defence);
+            return;
+        }
+        else if (CheckWin())
+        {
+            pre_end = true;
+        }
+        else
+        {
+            pre_end = false;
+        }
+
         MoveMade();
+        
     }
     void MoveMade()
     {
         currentPlayer = currentPlayer == player1 ? player2 : player1;
-        timer = 20f;
+        timer = 60f;
     }
     [ClientRpc]
-    void EndGame()
+    void EndGame(NetworkIdentity player1, int player1_defence, int player2_defence)
     {
+        StartCoroutine(EndgameCoroutine(player1, player1_defence, player2_defence));
+    }
+    IEnumerator EndgameCoroutine(NetworkIdentity player1, int player1_defence, int player2_defence)
+    {
+        yield return new WaitForSeconds(2);
+        int me_defence;
+        int opponent_defence;
+        if (player1.isLocalPlayer)
+        {
+            me_defence = player1_defence;
+            opponent_defence = player2_defence;
+        }
+        else
+        {
+            me_defence = player2_defence;
+            opponent_defence = player1_defence;
+        }
+        int me_final_score = 0;
+        int opponent_final_score = 0;
 
+        if (opponent_defence < 0) me_final_score = opponent_defence / -3 + 1;
+        if (me_defence < 0) opponent_final_score = me_defence / -3 + 1;
+        
+        yield return null;
+        animator.SetTrigger("launch");
+        yield return new WaitForSeconds(animator.runtimeAnimatorController.animationClips[1].length);
+        yield return new WaitForSeconds(1);
+        if (me_final_score > 0) { opponent_defence_players.gameObject.SetActive(false); }
+        else { me_attack_players.gameObject.SetActive(false); }
+        opponent_defence_score.text = opponent_defence.ToString();
+        animator.SetTrigger("launch");
+        yield return new WaitForSeconds(animator.runtimeAnimatorController.animationClips[2].length);
+        yield return new WaitForSeconds(2);
+        if (opponent_final_score > 0) { me_defence_players.gameObject.SetActive(false);  }
+        else { opponent_attack_players.gameObject.SetActive(false); }
+        me_defence_score.text = me_defence.ToString();
+        yield return new WaitForSeconds(3);
+        Field.SetActive(false);
+        EndScreen.SetActive(true);
+
+        EndScore_Me.text = me_final_score.ToString();
+        EndScore_Opponent.text = opponent_final_score.ToString();
+        if (me_final_score > opponent_final_score)
+        {
+            EndState.text = "ПОБЕДА";
+            EndState.color = Color.green;
+        }
+        else if (me_final_score < opponent_final_score)
+        {
+            EndState.text = "ПОРАЖЕНИЕ";
+            EndState.color = Color.red;
+        }
+        else
+        {
+            EndState.text = "НИЧЬЯ";
+            EndState.color = Color.white;
+        }
     }
     int[] CountScores()
     {
@@ -439,12 +544,6 @@ public class MatchController : NetworkBehaviour
                 {
                     if (movemessage.is_opponent)
                     {
-                        Debug.Log(("TO CARD:", (movemessage.row_to, players_cards[movemessage.card_index])));
-                        var keys = player1_field_cards[movemessage.row_to].cards.Keys.ToList();
-                        for (int i = 0; i < keys.Count; i++)
-                        {
-                            Debug.Log(("Keys:", keys[i]));
-                        }
                         player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
                     }
                     else
@@ -466,7 +565,6 @@ public class MatchController : NetworkBehaviour
                 {
                     player1_players.Remove(card);
                     player1_field_cards[movemessage.row_to].cards.Add(card, new List<ActionCardObj>());
-                    //Debug.Log(("player1",movemessage.row_to,card));
                     SpawnPlayerCard(player2, cardindex, movemessage.row_to);
                 }
                 else Debug.Log(("WTF", "Current player doesn't have that card"), currentPlayer);
@@ -491,7 +589,6 @@ public class MatchController : NetworkBehaviour
                 {
                     player2_players.Remove(card);
                     player2_field_cards[movemessage.row_to].cards.Add(card, new List<ActionCardObj>());
-                    Debug.Log(("player2", movemessage.row_to, card));
                     SpawnPlayerCard(player1, cardindex, movemessage.row_to);
                 }
                 else Debug.Log(("WTF", "Current player doesn't have that card"), currentPlayer);
@@ -658,7 +755,6 @@ public class MatchController : NetworkBehaviour
     public void RequestExitGame()
     {
         exitButton.gameObject.SetActive(false);
-        playAgainButton.gameObject.SetActive(false);
         CmdRequestExitGame();
     }
 
@@ -827,10 +923,10 @@ public class MatchController : NetworkBehaviour
                 {
                     switch (row) {
                         case 1:
-                            card.transform.SetParent(me_attack_modifs.transform);
+                            card.transform.SetParent(opponent_attack_modifs.transform);
                             break;
                         case 0:
-                            card.transform.SetParent(me_defence_modifs.transform);
+                            card.transform.SetParent(opponent_defence_modifs.transform);
                             break;
                     }
                 }
@@ -839,10 +935,10 @@ public class MatchController : NetworkBehaviour
                     switch (row)
                     {
                         case 1:
-                            card.transform.SetParent(opponent_attack_modifs.transform);
+                            card.transform.SetParent(me_attack_modifs.transform);
                             break;
                         case 0:
-                            card.transform.SetParent(opponent_defence_modifs.transform);
+                            card.transform.SetParent(me_defence_modifs.transform);
                             break;
                     }
                 }

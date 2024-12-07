@@ -6,6 +6,7 @@ public class PlayerCardObj : ScriptableObject
 {
     public PlayerAbility playerability;
     public Texture CardImg;
+    public Color color;
     public int attack;
     public int defence;
 }

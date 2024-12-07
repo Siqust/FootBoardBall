@@ -50,7 +50,6 @@ public class RowPlayers : MonoBehaviour, IDropHandler
             move.col_from = card.siblingindex;
 
             matchcontroller.MakePlay(MoveType.Player, card.index, move);
-            Debug.Log(card.index);
         }
         
         

@@ -1976,8 +1976,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -80, y: -41.6}
-  m_SizeDelta: {x: 140, y: 30}
+  m_AnchoredPosition: {x: -107.3, y: -2.5000076}
+  m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &385733808
 MonoBehaviour:
@@ -2109,7 +2109,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -87.5, y: -116.1}
+  m_AnchoredPosition: {x: -107.3, y: -77}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &401155559
@@ -2563,7 +2563,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CODE CREATE
+  m_text: "\u041B\u041E\u0411\u0411\u0418 \u0421 \u041A\u041E\u0414\u041E\u041C"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3135,7 +3135,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -81.1, y: -76.1}
+  m_AnchoredPosition: {x: -107.3, y: -37.000008}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &585942690
@@ -4204,7 +4204,7 @@ MonoBehaviour:
   offlineScene: 
   onlineScene: 
   transport: {fileID: 874070008}
-  networkAddress: localhost
+  networkAddress: 192.168.43.99
   maxConnections: 200
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
@@ -4213,7 +4213,7 @@ MonoBehaviour:
   autoCreatePlayer: 0
   playerSpawnMethod: 1
   spawnPrefabs:
-  - {fileID: 2081284820967130178, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+  - {fileID: 34760424134234100, guid: dfd18ec7ca73d3c4c867ae7459c047b3, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2
@@ -4851,8 +4851,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -80, y: 0}
-  m_SizeDelta: {x: 140, y: 30}
+  m_AnchoredPosition: {x: -107.3, y: 39.09999}
+  m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1100846362
 MonoBehaviour:
@@ -5638,7 +5638,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: FAST JOIN
+  m_text: "\u0410\u0412\u0422\u041E \u041F\u041E\u0418\u0421\u041A"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6270,7 +6270,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: CODE JOIN
+  m_text: "\u0417\u0410\u0419\u0422\u0418 \u041F\u041E \u041A\u041E\u0414\u0423"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -7753,7 +7753,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   matchList: {fileID: 1386671668}
   matchPrefab: {fileID: 3533216216399874123, guid: df3727c2222378b4ca786485a8b09981, type: 3}
-  matchControllerPrefab: {fileID: 2081284820967130178, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+  matchControllerPrefab: {fileID: 34760424134234100, guid: dfd18ec7ca73d3c4c867ae7459c047b3, type: 3}
   createButton: {fileID: 1100846363}
   joinButton: {fileID: 8446052}
   matchCodeInputField: {fileID: 585942690}

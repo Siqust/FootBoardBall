@@ -26,19 +26,25 @@ public class ActionCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         visualcardparent = GameObject.FindWithTag("PlayerCards").transform;
         visualcard = Instantiate(visualcard_prefab, visualcardparent);
         if (visualcard_pos != null) { visualcard.transform.position = visualcard_pos; }
-        Color selfcolor = transform.GetComponent<RawImage>().color;
+        Color selfcolor = matchcontroller.actions_cards[index].color;//transform.GetComponent<RawImage>().color;
         visualcard.GetComponent<RawImage>().color = new Color(selfcolor.r,selfcolor.g,selfcolor.b, 255);
         transform.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
         FollowCard visualcardscript = visualcard.GetComponent<FollowCard>();
         visualcardscript.target_card = transform;
         visualcardscript.ActionModifierText.gameObject.SetActive(true); visualcardscript.ActionTypeText.gameObject.SetActive(true);
-        if (cardtype == ActionCardType.ActPlayerLT || cardtype == ActionCardType.ActPlayerOT)
+        if (cardtype == ActionCardType.ActPlayerLT)
         {
             visualcardscript.ActionTypeText.text = "ÈÃÐÎÊ";
         }
         else if (cardtype == ActionCardType.ActRow)
         {
             visualcardscript.ActionTypeText.text = "ÐßÄ";
+        }
+        else if (cardtype == ActionCardType.ActPlayerOT)
+        {
+            visualcardscript.ActionTypeText.gameObject.SetActive(false);
+            visualcardscript.ActionModifierText.gameObject.SetActive(false);
+            visualcardscript.Deletion.SetActive(true);
         }
         visualcardscript.ActionModifierText.text = matchcontroller.actions_cards[index].modif.ToString();
         visualcard.transform.SetAsLastSibling();
@@ -74,7 +80,7 @@ public class ActionCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (stopEndDrag) return;
+        if (stopEndDrag || matchcontroller.ended || !dragging) return;
         //if (matchcontroller.currentPlayer != null) { if (!matchcontroller.currentPlayer.isLocalPlayer) return; }
 
 

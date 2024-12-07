@@ -17,6 +17,7 @@ public class MatchNetworkManager : NetworkManager
     /// </summary>
     public override void Awake()
     {
+        Screen.orientation = ScreenOrientation.LandscapeLeft;
         base.Awake();
         singleton = this;
         canvasController.InitializeData();

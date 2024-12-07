@@ -10,9 +10,10 @@ public class FollowCard : MonoBehaviour
     public TextMeshProUGUI player_defence_text;
     public TextMeshProUGUI ActionModifierText;
     public TextMeshProUGUI ActionTypeText;
+    public GameObject Deletion;
     [SerializeField] private float speed;
     void Update()
     {
-        transform.position = Vector2.Lerp(transform.position, target_card.position, speed);
+        transform.position = Vector2.Lerp(transform.position, target_card.position, speed*Time.deltaTime);
     }
 }

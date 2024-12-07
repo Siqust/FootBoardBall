@@ -26,7 +26,7 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         visualcardparent = GameObject.FindWithTag("PlayerCards").transform;
         visualcard = Instantiate(visualcard_prefab, visualcardparent);
         if (visualcard_pos != null) { visualcard.transform.position = visualcard_pos; }
-        Color selfcolor = transform.GetComponent<RawImage>().color;
+        Color selfcolor = matchcontroller.players_cards[index].color; //transform.GetComponent<RawImage>().color;
         visualcard.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 255);
         transform.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
         //visualcard.transform.position = transform.position;
@@ -46,7 +46,7 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!CanDrag)
+        if (!CanDrag || matchcontroller.ended)
             return;
         if (matchcontroller.currentPlayer != null) { if (!matchcontroller.currentPlayer.isLocalPlayer) return; }
 
@@ -112,5 +112,9 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     {
         yield return new WaitForSeconds(0.5f);
         obj.GetComponent<ActionCard>().visualcard.SetActive(false);
+    }
+    void OnDisable()
+    {
+        visualcard.SetActive(false);
     }
 }
