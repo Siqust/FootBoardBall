@@ -6,8 +6,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Mirror;
-
-
 public struct Row
 {
     public List<ActionCardObj> row_modifiers;
@@ -372,78 +370,298 @@ public class MatchController : NetworkBehaviour
     }
     int[] CountScores()
     {
-        List<int>[] player1_scores = new List<int>[2];
-        List<int>[] player2_scores = new List<int>[2];
-        player1_scores[0] = new List<int>();
-        player1_scores[1] = new List<int>();
-        player2_scores[0] = new List<int>();
-        player2_scores[1] = new List<int>();
-        Dictionary<PlayerCardObj, List<ActionCardObj>> list = player1_field_cards[0].cards;
+        int[][] player1_scores = new int[2][];
+        int[][] player2_scores = new int[2][];
+        player1_scores[0] = new int[4] { 0, 0, 0, 0 };
+        player1_scores[1] = new int[4] { 0, 0, 0, 0 };
+        player2_scores[0] = new int[4] { 0, 0, 0, 0 };
+        player2_scores[1] = new int[4] { 0, 0, 0, 0 };
+
+        int[][] player1_stat_change = new int[2][];
+        int[][] player2_stat_change = new int[2][];
+        player1_stat_change[0] = new int[4] { 0, 0, 0, 0 };
+        player1_stat_change[1] = new int[4] { 0, 0, 0, 0 };
+        player2_stat_change[0] = new int[4] { 0, 0, 0, 0 };
+        player2_stat_change[1] = new int[4] { 0, 0, 0, 0 };
+
+        Dictionary<PlayerCardObj, List<ActionCardObj>> list;
+
+        list = player1_field_cards[0].cards;
         for (int i = 0; i < list.Count; i++)
         {
             var player = list.Keys.ToList()[i];
-            player1_scores[0].Add(player.defence);
+            player1_scores[0][i] = player.defence;
             for (int j = 0; j < list[player].Count; j++)
             {
                 var action = list[player][j];
                 player1_scores[0][i] += action.modif;
             }
+            player1_scores[0][i] = Mathf.Clamp(player1_scores[0][i], 0, 99);
+            player1_stat_change[0][i] = player1_scores[0][i] - player.defence;
         }
 
         list = player1_field_cards[1].cards;
         for (int i = 0; i < list.Count; i++)
         {
             var player = list.Keys.ToList()[i];
-            player1_scores[1].Add(player.attack);
+            player1_scores[1][i] = player.attack;
             for (int j = 0; j < list[player].Count; j++)
             {
                 var action = list[player][j];
                 player1_scores[1][i] += action.modif;
             }
+            player1_scores[1][i] = Mathf.Clamp(player1_scores[1][i], 0, 99);
+            player1_stat_change[1][i] = player1_scores[1][i] - player.attack;
         }
         list = player2_field_cards[0].cards;
         for (int i = 0; i < list.Count; i++)
         {
             var player = list.Keys.ToList()[i];
-            player2_scores[0].Add(player.defence);
+            player2_scores[0][i] = player.defence;
             for (int j = 0; j < list[player].Count; j++)
             {
                 var action = list[player][j];
                 player2_scores[0][i] += action.modif;
             }
+            player2_scores[0][i] = Mathf.Clamp(player2_scores[0][i], 0, 99);
+            player2_stat_change[0][i] = player2_scores[0][i] - player.defence;
         }
         list = player2_field_cards[1].cards;
         for (int i = 0; i < list.Count; i++)
         {
             var player = list.Keys.ToList()[i];
-            player2_scores[1].Add(player.attack);
+            player2_scores[1][i] = player.attack;
             for (int j = 0; j < list[player].Count; j++)
             {
                 var action = list[player][j];
                 player2_scores[1][i] += action.modif;
             }
+            player2_scores[1][i] = Mathf.Clamp(player2_scores[1][i], 0, 99);
+            player2_stat_change[1][i] = player2_scores[1][i] - player.attack;
         }
         int player1_defence = 0;
-        for (int i = 0; i < player1_scores[0].Count; i++) { player1_defence += player1_scores[0][i]; }
-        for (int i =0; i<player1_row_modifiers[0].Count; i++) { player1_defence += player1_row_modifiers[0][i].modif; }
-
+        for (int i = 0; i < player1_scores[0].Length; i++) { player1_defence += player1_scores[0][i]; }
         int player1_attack = 0;
-        for (int i = 0; i < player1_scores[1].Count; i++) { player1_attack += player1_scores[1][i]; }
-        for (int i = 0; i < player1_row_modifiers[1].Count; i++) { player1_attack += player1_row_modifiers[1][i].modif; }
-
+        for (int i = 0; i < player1_scores[1].Length; i++) { player1_attack += player1_scores[1][i]; }
         int player2_defence = 0;
-        for (int i = 0; i < player2_scores[0].Count; i++) { player2_defence += player2_scores[0][i]; }
-        for (int i = 0; i < player2_row_modifiers[0].Count; i++) { player2_defence += player2_row_modifiers[0][i].modif; }
-
+        for (int i = 0; i < player2_scores[0].Length; i++) { player2_defence += player2_scores[0][i]; }
         int player2_attack = 0;
-        for (int i = 0; i < player2_scores[1].Count; i++) { player2_attack += player2_scores[1][i]; }
-        for (int i = 0; i < player2_row_modifiers[1].Count; i++) { player2_attack += player2_row_modifiers[1][i].modif; }
+        for (int i = 0; i < player2_scores[1].Length; i++) { player2_attack += player2_scores[1][i]; }
 
-        return new int[4] { player1_attack, player1_defence, player2_attack, player2_defence };
+
+        int player1_defence_row_modif = 0;
+        for (int i = 0; i < player1_row_modifiers[0].Count; i++) { player1_defence_row_modif += player1_row_modifiers[0][i].modif * player1_field_cards[0].cards.Count; }
+        int player1_attack_row_modif = 0;
+        for (int i = 0; i < player1_row_modifiers[1].Count; i++) { player1_attack_row_modif += player1_row_modifiers[1][i].modif * player1_field_cards[1].cards.Count; }
+        int player2_defence_row_modif = 0;
+        for (int i = 0; i < player2_row_modifiers[0].Count; i++) { player2_defence_row_modif += player2_row_modifiers[0][i].modif * player2_field_cards[0].cards.Count; }
+        int player2_attack_row_modif = 0;
+        for (int i = 0; i < player2_row_modifiers[1].Count; i++) { player2_attack_row_modif += player2_row_modifiers[1][i].modif * player2_field_cards[1].cards.Count; }
+
+        UpdateStatsUI(player1, player1_scores[0], player1_scores[1], player2_scores[0], player2_scores[1],player1_defence_row_modif,player1_attack_row_modif, player2_defence_row_modif,player2_attack_row_modif,
+            player1_stat_change[0], player1_stat_change[1], player2_stat_change[0], player2_stat_change[1]);
+
+        return new int[4] { player1_attack+player1_attack_row_modif, player1_defence+player1_defence_row_modif, 
+            player2_attack+player2_attack_row_modif, player2_defence+player2_defence_row_modif };
     }
 
     [ClientRpc]
-    void UpdateScores(NetworkIdentity player1,int player1_defence, int player1_attack, int player2_defence, int player2_attack)
+    //void UpdateStatsUI(NetworkIdentity player1, List<int>[] player1_scores, List<int>[] player2_scores, int player1_defence_row_modif, int player1_attack_row_modif, int player2_defence_row_modif, int player2_attack_row_modif,
+    //    List<int>[] player1_stat_change, List<int>[] player2_stat_change)
+    void UpdateStatsUI(NetworkIdentity player1, int[] player1_scores_defence, int[] player1_scores_attack, int[] player2_scores_defence, int[] player2_scores_attack, 
+        int player1_defence_row_modif, int player1_attack_row_modif, int player2_defence_row_modif, int player2_attack_row_modif,
+        int[] player1_stat_change_defence, int[] player1_stat_change_attack, int[] player2_stat_change_defence, int[] player2_stat_change_attack)
+    {
+        int[][] player1_scores = new int[2][];
+        int[][] player2_scores = new int[2][];
+        player1_scores[0] = player1_scores_defence;
+        player1_scores[1] = player1_scores_attack;
+        player2_scores[0] = player2_scores_defence;
+        player2_scores[1] = player2_scores_attack;
+
+        int[][] player1_stat_change = new int[2][];
+        int[][] player2_stat_change = new int[2][];
+        player1_stat_change[0] = player1_stat_change_defence;
+        player1_stat_change[1] = player1_stat_change_attack;
+        player2_stat_change[0] = player2_stat_change_defence;
+        player2_stat_change[1] = player2_stat_change_attack;
+
+
+        if (player1.isLocalPlayer)
+        {
+            PlayerCard card;
+            int child_count;
+            for (int row = 0; row < 2; row++)
+            {
+                child_count = row==0 ? me_defence_players.transform.childCount : me_attack_players.transform.childCount;
+                for (int i = 0; i < child_count; i++)
+                {
+                    if (row == 0)
+                    {
+                        card = me_defence_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_defence_text.text = player1_scores[0][i].ToString();
+                        card.visualcardscript.player_attack_text.text = players_cards[card.index].attack.ToString();
+                    }
+                    else
+                    {
+                        card = me_attack_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_attack_text.text = player1_scores[1][i].ToString();
+                        card.visualcardscript.player_defence_text.text = players_cards[card.index].defence.ToString();
+                    }
+
+                    for (int j = 0; j < 8; j++)
+                    {
+                        card.visualcardscript.up_arrows[j].SetActive(false);
+                        card.visualcardscript.down_arrows[j].SetActive(false);
+                    }
+                    if (player1_stat_change[row][i] > 0)
+                    {
+                        for (int j = 0; j < player1_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.up_arrows[j].SetActive(true);
+                        }
+                    }
+                    else if (player1_stat_change[row][i] < 0)
+                    {
+                        for (int j = 0; j < -player1_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.down_arrows[j].SetActive(true);
+                        }
+                    }
+                }
+            }
+            for (int row = 0; row < 2; row++)
+            {
+                child_count = row == 0 ? opponent_defence_players.transform.childCount : opponent_attack_players.transform.childCount;
+                for (int i = 0; i < child_count; i++)
+                {
+                    if (row == 0)
+                    {
+                        card = opponent_defence_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_defence_text.text = player2_scores[0][i].ToString();
+                        card.visualcardscript.player_attack_text.text = players_cards[card.index].attack.ToString();
+                    }
+                    else
+                    {
+                        card = opponent_attack_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_attack_text.text = player2_scores[1][i].ToString();
+                        card.visualcardscript.player_defence_text.text = players_cards[card.index].defence.ToString();
+                    }
+
+                    for (int j = 0; j < 8; j++)
+                    {
+                        card.visualcardscript.up_arrows[j].SetActive(false);
+                        card.visualcardscript.down_arrows[j].SetActive(false);
+                    }
+                    if (player2_stat_change[row][i] > 0)
+                    {
+                        for (int j = 0; j < player2_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.up_arrows[j].SetActive(true);
+                        }
+                    }
+                    else if (player2_stat_change[row][i] < 0)
+                    {
+                        for (int j = 0; j < -player2_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.down_arrows[j].SetActive(true);
+                        }
+                    }
+                }
+            }
+        }
+
+        else
+        {
+            PlayerCard card;
+            int child_count;
+            for (int row = 0; row < 2; row++)
+            {
+                child_count = row == 0 ? opponent_defence_players.transform.childCount : opponent_attack_players.transform.childCount;
+                for (int i = 0; i < child_count; i++)
+                {
+                    if (row == 0)
+                    {
+                        card = opponent_defence_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_defence_text.text = player1_scores[0][i].ToString();
+                        card.visualcardscript.player_attack_text.text = players_cards[card.index].attack.ToString();
+                    }
+                    else
+                    {
+                        card = opponent_attack_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_attack_text.text = player1_scores[1][i].ToString();
+                        card.visualcardscript.player_defence_text.text = players_cards[card.index].defence.ToString();
+                    }
+
+                    for (int j = 0; j < 8; j++)
+                    {
+                        card.visualcardscript.up_arrows[j].SetActive(false);
+                        card.visualcardscript.down_arrows[j].SetActive(false);
+                    }
+
+                    if (player1_stat_change[row][i] > 0)
+                    {
+                        for (int j = 0; j < player1_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.up_arrows[j].SetActive(true);
+                        }
+                    }
+                    else if (player1_stat_change[row][i] < 0)
+                    {
+                        for (int j = 0; j < -player1_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.down_arrows[j].SetActive(true);
+                        }
+                    }
+
+                }
+            }
+            for (int row = 0; row < 2; row++)
+            {
+                child_count = row == 0 ? me_defence_players.transform.childCount : me_attack_players.transform.childCount;
+                for (int i = 0; i < child_count; i++)
+                {
+                    if (row == 0)
+                    {
+                        card = me_defence_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_defence_text.text = player2_scores[0][i].ToString();
+                        card.visualcardscript.player_attack_text.text = players_cards[card.index].attack.ToString();
+                    }
+                    else
+                    {
+                        card = me_attack_players.transform.GetChild(i).GetComponent<PlayerCard>();
+                        card.visualcardscript.player_attack_text.text = player2_scores[1][i].ToString();
+                        card.visualcardscript.player_defence_text.text = players_cards[card.index].defence.ToString();
+                    }
+
+                    for (int j = 0; j < 8; j++)
+                    {
+                        card.visualcardscript.up_arrows[j].SetActive(false);
+                        card.visualcardscript.down_arrows[j].SetActive(false);
+                    }
+                    if (player2_stat_change[row][i] > 0)
+                    {
+                        for (int j = 0; j < player2_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.up_arrows[j].SetActive(true);
+                        }
+                    }
+                    else if (player2_stat_change[row][i] < 0)
+                    {
+                        for (int j = 0; j < -player2_stat_change[row][i]; j++)
+                        {
+                            card.visualcardscript.down_arrows[j].SetActive(true);
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+
+    [ClientRpc]
+    void UpdateScores(NetworkIdentity player1, int player1_defence, int player1_attack, int player2_defence, int player2_attack)
     {
         if (player1.isLocalPlayer)
         {
@@ -816,7 +1034,7 @@ public class MatchController : NetworkBehaviour
     }
 
     public GameObject PlayerCardPrefab;
-    public GameObject ActionCardPrefab;
+    public GameObject ActionCardPrefab; 
 
     [ClientRpc]
     public void MovePlayerCard(NetworkIdentity player, MoveMessage movemessage)

@@ -94,6 +94,7 @@ public class ActionCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         else
         {
             transform.SetAsLastSibling();
+            visualcard.SetActive(false);
         }
         CardImage.raycastTarget = true;
         transform.localPosition = Vector3.zero;

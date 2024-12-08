@@ -357,6 +357,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &16940904
@@ -607,6 +608,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &77096278
@@ -799,6 +801,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &116632559
@@ -901,6 +904,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &116632565
@@ -1243,6 +1247,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &184867520
@@ -1359,6 +1364,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &239920241
@@ -1537,6 +1543,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &242531452
@@ -2309,6 +2316,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &490177805
@@ -2875,6 +2883,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &548950182
@@ -3096,6 +3105,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &585942688
@@ -3454,6 +3464,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &702852066
@@ -3607,6 +3618,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &814991252
@@ -4000,6 +4012,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &852742848
@@ -4204,7 +4217,7 @@ MonoBehaviour:
   offlineScene: 
   onlineScene: 
   transport: {fileID: 874070008}
-  networkAddress: 192.168.43.99
+  networkAddress: localhost
   maxConnections: 200
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
@@ -4358,6 +4371,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &937333787
@@ -4696,6 +4710,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &1025903494
@@ -4812,6 +4827,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &1100846360
@@ -6210,6 +6226,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &1515321210
@@ -6856,6 +6873,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &1724319795
@@ -6958,6 +6976,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!114 &1724319801
@@ -7074,6 +7093,7 @@ MonoBehaviour:
   visualcard_pos: {x: 0, y: 0}
   visualcard_prefab: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
   visualcard: {fileID: 8078405374151681819, guid: 6f16d483a56de6d4eb77855504fe3548, type: 3}
+  visualcardscript: {fileID: 0}
   visualcardparent: {fileID: 0}
   ParentAfterDrag: {fileID: 0}
 --- !u!1 &1799151731

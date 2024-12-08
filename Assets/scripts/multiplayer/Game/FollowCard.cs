@@ -11,6 +11,9 @@ public class FollowCard : MonoBehaviour
     public TextMeshProUGUI ActionModifierText;
     public TextMeshProUGUI ActionTypeText;
     public GameObject Deletion;
+    public List<GameObject> up_arrows;
+    public List<GameObject> down_arrows;
+
     [SerializeField] private float speed;
     void Update()
     {

@@ -18,23 +18,33 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     [HideInInspector] public Vector2 visualcard_pos;
     [SerializeField] private GameObject visualcard_prefab;
     [SerializeField] public GameObject visualcard;
+    public FollowCard visualcardscript;
     [HideInInspector] public Transform visualcardparent;
     [HideInInspector] public Transform ParentAfterDrag;
+
+    private void Awake()
+    {
+        visualcardparent = GameObject.FindWithTag("PlayerCards").transform;
+        visualcard = Instantiate(visualcard_prefab, visualcardparent);
+        visualcardscript = visualcard.GetComponent<FollowCard>();
+    }
     private void Start()
     {
         CardImage = GetComponent<RawImage>();
-        visualcardparent = GameObject.FindWithTag("PlayerCards").transform;
-        visualcard = Instantiate(visualcard_prefab, visualcardparent);
         if (visualcard_pos != null) { visualcard.transform.position = visualcard_pos; }
-        Color selfcolor = matchcontroller.players_cards[index].color; //transform.GetComponent<RawImage>().color;
+        Color selfcolor = matchcontroller.players_cards[index].color;
         visualcard.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 255);
         transform.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
-        //visualcard.transform.position = transform.position;
-        FollowCard visualcardscript = visualcard.GetComponent<FollowCard>();
         visualcardscript.target_card = transform;
         visualcardscript.player_attack_text.gameObject.SetActive(true); visualcardscript.player_defence_text.gameObject.SetActive(true);
-        visualcardscript.player_attack_text.text = matchcontroller.players_cards[index].attack.ToString();
-        visualcardscript.player_defence_text.text = matchcontroller.players_cards[index].defence.ToString();
+        if (visualcardscript.player_attack_text.text == "-1")
+        {
+            visualcardscript.player_attack_text.text = matchcontroller.players_cards[index].attack.ToString();
+        }
+        if (visualcardscript.player_defence_text.text == "-1")
+        {
+            visualcardscript.player_defence_text.text = matchcontroller.players_cards[index].defence.ToString();
+        }
         visualcard.transform.SetAsLastSibling();
         
         dragging = false;
