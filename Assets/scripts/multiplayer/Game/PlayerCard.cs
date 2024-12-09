@@ -120,7 +120,7 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     }
     IEnumerator Deletevisualcard(Transform obj)
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.7f);
         obj.GetComponent<ActionCard>().visualcard.SetActive(false);
     }
     void OnDisable()

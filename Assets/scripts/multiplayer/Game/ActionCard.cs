@@ -46,7 +46,8 @@ public class ActionCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             visualcardscript.ActionModifierText.gameObject.SetActive(false);
             visualcardscript.Deletion.SetActive(true);
         }
-        visualcardscript.ActionModifierText.text = matchcontroller.actions_cards[index].modif.ToString();
+        var plus = matchcontroller.actions_cards[index].modif > 0 ? "+" : "";
+        visualcardscript.ActionModifierText.text = plus + matchcontroller.actions_cards[index].modif.ToString();
         visualcard.transform.SetAsLastSibling();
         dragging = false;
     }

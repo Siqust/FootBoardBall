@@ -6,6 +6,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Mirror;
+using System.Reflection;
+
 public struct Row
 {
     public List<ActionCardObj> row_modifiers;
@@ -17,6 +19,9 @@ public class MatchController : NetworkBehaviour
 {
     internal readonly SyncDictionary<NetworkIdentity, MatchPlayerData> matchPlayerData = new SyncDictionary<NetworkIdentity, MatchPlayerData>();
     internal readonly Dictionary<CellValue, CellGUI> MatchCells = new Dictionary<CellValue, CellGUI>();
+
+    [SerializeField] public bool ENDGAME;
+
 
     public GameObject Field;
     public GameObject EndScreen;
@@ -100,6 +105,8 @@ public class MatchController : NetworkBehaviour
     public NetworkIdentity currentPlayer;
     void Awake()
     {
+        ENDGAME = false;
+
         pre_end = false;
         ended = false;
         timer = 60f;
@@ -119,6 +126,10 @@ public class MatchController : NetworkBehaviour
     }
     private void Update()
     {
+        if (ENDGAME)
+        {
+            EndGame(player1, 0, 0);
+        }
         if (!ended && game_started)
         {
             timer -= Time.deltaTime;
@@ -396,8 +407,8 @@ public class MatchController : NetworkBehaviour
                 var action = list[player][j];
                 player1_scores[0][i] += action.modif;
             }
-            player1_scores[0][i] = Mathf.Clamp(player1_scores[0][i], 0, 99);
             player1_stat_change[0][i] = player1_scores[0][i] - player.defence;
+            player1_scores[0][i] = Mathf.Clamp(player1_scores[0][i], 0, 99);
         }
 
         list = player1_field_cards[1].cards;
@@ -410,8 +421,8 @@ public class MatchController : NetworkBehaviour
                 var action = list[player][j];
                 player1_scores[1][i] += action.modif;
             }
-            player1_scores[1][i] = Mathf.Clamp(player1_scores[1][i], 0, 99);
             player1_stat_change[1][i] = player1_scores[1][i] - player.attack;
+            player1_scores[1][i] = Mathf.Clamp(player1_scores[1][i], 0, 99);
         }
         list = player2_field_cards[0].cards;
         for (int i = 0; i < list.Count; i++)
@@ -423,8 +434,8 @@ public class MatchController : NetworkBehaviour
                 var action = list[player][j];
                 player2_scores[0][i] += action.modif;
             }
-            player2_scores[0][i] = Mathf.Clamp(player2_scores[0][i], 0, 99);
             player2_stat_change[0][i] = player2_scores[0][i] - player.defence;
+            player2_scores[0][i] = Mathf.Clamp(player2_scores[0][i], 0, 99);
         }
         list = player2_field_cards[1].cards;
         for (int i = 0; i < list.Count; i++)
@@ -436,8 +447,8 @@ public class MatchController : NetworkBehaviour
                 var action = list[player][j];
                 player2_scores[1][i] += action.modif;
             }
-            player2_scores[1][i] = Mathf.Clamp(player2_scores[1][i], 0, 99);
             player2_stat_change[1][i] = player2_scores[1][i] - player.attack;
+            player2_scores[1][i] = Mathf.Clamp(player2_scores[1][i], 0, 99);
         }
         int player1_defence = 0;
         for (int i = 0; i < player1_scores[0].Length; i++) { player1_defence += player1_scores[0][i]; }
@@ -461,9 +472,10 @@ public class MatchController : NetworkBehaviour
         UpdateStatsUI(player1, player1_scores[0], player1_scores[1], player2_scores[0], player2_scores[1],player1_defence_row_modif,player1_attack_row_modif, player2_defence_row_modif,player2_attack_row_modif,
             player1_stat_change[0], player1_stat_change[1], player2_stat_change[0], player2_stat_change[1]);
 
-        return new int[4] { player1_attack+player1_attack_row_modif, player1_defence+player1_defence_row_modif, 
-            player2_attack+player2_attack_row_modif, player2_defence+player2_defence_row_modif };
+        return new int[4] { Positive(player1_attack+player1_attack_row_modif), Positive(player1_defence+player1_defence_row_modif),
+            Positive(player2_attack+player2_attack_row_modif), Positive(player2_defence+player2_defence_row_modif) };
     }
+    private int Positive(int a) { return a >= 0 ? a : 0; }
 
     [ClientRpc]
     //void UpdateStatsUI(NetworkIdentity player1, List<int>[] player1_scores, List<int>[] player2_scores, int player1_defence_row_modif, int player1_attack_row_modif, int player2_defence_row_modif, int player2_attack_row_modif,
@@ -569,6 +581,17 @@ public class MatchController : NetworkBehaviour
                     }
                 }
             }
+
+            string plus;
+            plus = player1_attack_row_modif >= 0 ? "+" : "";
+            me_attack_modifs.modif_text.text = plus + player1_attack_row_modif.ToString();
+            plus = player1_defence_row_modif >= 0 ? "+" : "";
+            me_defence_modifs.modif_text.text = plus + player1_defence_row_modif.ToString();
+
+            plus = player2_attack_row_modif >= 0 ? "+" : "";
+            opponent_attack_modifs.modif_text.text = plus + player2_attack_row_modif.ToString();
+            plus = player2_defence_row_modif >= 0 ? "+" : "";
+            opponent_defence_modifs.modif_text.text = plus + player2_defence_row_modif.ToString();
         }
 
         else
@@ -656,6 +679,17 @@ public class MatchController : NetworkBehaviour
 
                 }
             }
+
+            string plus;
+            plus = player2_attack_row_modif >= 0 ? "+" : "";
+            me_attack_modifs.modif_text.text = plus + player2_attack_row_modif.ToString();
+            plus = player2_defence_row_modif >= 0 ? "+" : "";
+            me_defence_modifs.modif_text.text = plus + player2_defence_row_modif.ToString();
+
+            plus = player1_attack_row_modif >= 0 ? "+" : "";
+            opponent_attack_modifs.modif_text.text = plus + player1_attack_row_modif.ToString();
+            plus = player1_defence_row_modif >= 0 ? "+" : "";
+            opponent_defence_modifs.modif_text.text = plus + player1_defence_row_modif.ToString();
         }
     }
 
@@ -1162,6 +1196,7 @@ public class MatchController : NetworkBehaviour
                 }
                 ChangeVisualActionCardPos(cardscript, 1);
                 card.transform.position = card.transform.parent.position;
+                card.transform.parent.GetComponent<RowModifiers>().offModifsImages();
                 cardscript.CanDrag = false;
                 break;
         }
