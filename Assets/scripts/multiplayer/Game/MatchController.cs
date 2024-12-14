@@ -7,11 +7,14 @@ using UnityEngine.UI;
 using TMPro;
 using Mirror;
 using System.Reflection;
+using System.Collections.Specialized;
 
 public struct Row
 {
     public List<ActionCardObj> row_modifiers;
-    public Dictionary<PlayerCardObj, List<ActionCardObj>> cards;
+    public List<PlayerCardObj> players;
+    public List<List<ActionCardObj>> actions;
+    //public OrderedDictionary cards; //Dictionary<PlayerCardObj, List<ActionCardObj>>
 }
 
 [RequireComponent(typeof(NetworkMatch))]
@@ -21,7 +24,6 @@ public class MatchController : NetworkBehaviour
     internal readonly Dictionary<CellValue, CellGUI> MatchCells = new Dictionary<CellValue, CellGUI>();
 
     [SerializeField] public bool ENDGAME;
-
 
     public GameObject Field;
     public GameObject EndScreen;
@@ -110,10 +112,15 @@ public class MatchController : NetworkBehaviour
         pre_end = false;
         ended = false;
         timer = 60f;
-        player1_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
-        player2_field_cards[1].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
-        player1_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
-        player2_field_cards[0].cards = new Dictionary<PlayerCardObj, List<ActionCardObj>>(4);
+        player1_field_cards[0].players = new List<PlayerCardObj>();
+        player1_field_cards[1].players = new List<PlayerCardObj>();
+        player2_field_cards[0].players = new List<PlayerCardObj>();
+        player2_field_cards[1].players = new List<PlayerCardObj>();
+
+        player1_field_cards[0].actions = new List<List<ActionCardObj>>();
+        player1_field_cards[1].actions = new List<List<ActionCardObj>>();
+        player2_field_cards[0].actions = new List<List<ActionCardObj>>();
+        player2_field_cards[1].actions = new List<List<ActionCardObj>>();
 
         player1_row_modifiers = new List<ActionCardObj>[2];
         player2_row_modifiers = new List<ActionCardObj>[2];
@@ -230,8 +237,8 @@ public class MatchController : NetworkBehaviour
 
     bool CheckWin()
     {
-        if (player1_field_cards[0].cards.Count == 4 && player1_field_cards[1].cards.Count == 4) return true;
-        else if (player2_field_cards[0].cards.Count == 4 && player2_field_cards[1].cards.Count == 4) return true;
+        if (player1_field_cards[0].players.Count == 4 && player1_field_cards[1].players.Count == 4) return true;
+        else if (player2_field_cards[0].players.Count == 4 && player2_field_cards[1].players.Count == 4) return true;
         else return false;
     }
     [Command(requiresAuthority = false)]
@@ -395,61 +402,48 @@ public class MatchController : NetworkBehaviour
         player2_stat_change[0] = new int[4] { 0, 0, 0, 0 };
         player2_stat_change[1] = new int[4] { 0, 0, 0, 0 };
 
-        Dictionary<PlayerCardObj, List<ActionCardObj>> list;
+        List<PlayerCardObj> players;
+        List<List<ActionCardObj>> actions;
 
-        list = player1_field_cards[0].cards;
-        for (int i = 0; i < list.Count; i++)
+
+        for (int row = 0; row < 2; row++)
         {
-            var player = list.Keys.ToList()[i];
-            player1_scores[0][i] = player.defence;
-            for (int j = 0; j < list[player].Count; j++)
+            players = player1_field_cards[row].players;
+            actions = player1_field_cards[row].actions;
+            for (int i = 0; i < players.Count; i++)
             {
-                var action = list[player][j];
-                player1_scores[0][i] += action.modif;
+                var player = players[i];
+                int player_ability = row == 0 ? player.defence : player.attack;
+                player1_scores[row][i] = player_ability;
+                for (int j = 0; j < actions[i].Count; j++)
+                {
+                    var action = actions[i][j];
+                    player1_scores[row][i] += action.modif;
+                }
+                player1_stat_change[row][i] = player1_scores[row][i] - player_ability;
+                player1_scores[row][i] = Mathf.Clamp(player1_scores[row][i], 0, 99);
             }
-            player1_stat_change[0][i] = player1_scores[0][i] - player.defence;
-            player1_scores[0][i] = Mathf.Clamp(player1_scores[0][i], 0, 99);
         }
 
-        list = player1_field_cards[1].cards;
-        for (int i = 0; i < list.Count; i++)
+        for (int row = 0; row < 2; row++)
         {
-            var player = list.Keys.ToList()[i];
-            player1_scores[1][i] = player.attack;
-            for (int j = 0; j < list[player].Count; j++)
+            players = player2_field_cards[row].players;
+            actions = player2_field_cards[row].actions;
+            for (int i = 0; i < players.Count; i++)
             {
-                var action = list[player][j];
-                player1_scores[1][i] += action.modif;
+                var player = players[i];
+                int player_ability = row == 0 ? player.defence : player.attack;
+                player2_scores[row][i] = player_ability;
+                for (int j = 0; j < actions[i].Count; j++)
+                {
+                    var action = actions[i][j];
+                    player2_scores[row][i] += action.modif;
+                }
+                player2_stat_change[row][i] = player2_scores[row][i] - player_ability;
+                player2_scores[row][i] = Mathf.Clamp(player2_scores[row][i], 0, 99);
             }
-            player1_stat_change[1][i] = player1_scores[1][i] - player.attack;
-            player1_scores[1][i] = Mathf.Clamp(player1_scores[1][i], 0, 99);
         }
-        list = player2_field_cards[0].cards;
-        for (int i = 0; i < list.Count; i++)
-        {
-            var player = list.Keys.ToList()[i];
-            player2_scores[0][i] = player.defence;
-            for (int j = 0; j < list[player].Count; j++)
-            {
-                var action = list[player][j];
-                player2_scores[0][i] += action.modif;
-            }
-            player2_stat_change[0][i] = player2_scores[0][i] - player.defence;
-            player2_scores[0][i] = Mathf.Clamp(player2_scores[0][i], 0, 99);
-        }
-        list = player2_field_cards[1].cards;
-        for (int i = 0; i < list.Count; i++)
-        {
-            var player = list.Keys.ToList()[i];
-            player2_scores[1][i] = player.attack;
-            for (int j = 0; j < list[player].Count; j++)
-            {
-                var action = list[player][j];
-                player2_scores[1][i] += action.modif;
-            }
-            player2_stat_change[1][i] = player2_scores[1][i] - player.attack;
-            player2_scores[1][i] = Mathf.Clamp(player2_scores[1][i], 0, 99);
-        }
+
         int player1_defence = 0;
         for (int i = 0; i < player1_scores[0].Length; i++) { player1_defence += player1_scores[0][i]; }
         int player1_attack = 0;
@@ -461,13 +455,13 @@ public class MatchController : NetworkBehaviour
 
 
         int player1_defence_row_modif = 0;
-        for (int i = 0; i < player1_row_modifiers[0].Count; i++) { player1_defence_row_modif += player1_row_modifiers[0][i].modif * player1_field_cards[0].cards.Count; }
+        for (int i = 0; i < player1_row_modifiers[0].Count; i++) { player1_defence_row_modif += player1_row_modifiers[0][i].modif * player1_field_cards[0].players.Count; }
         int player1_attack_row_modif = 0;
-        for (int i = 0; i < player1_row_modifiers[1].Count; i++) { player1_attack_row_modif += player1_row_modifiers[1][i].modif * player1_field_cards[1].cards.Count; }
+        for (int i = 0; i < player1_row_modifiers[1].Count; i++) { player1_attack_row_modif += player1_row_modifiers[1][i].modif * player1_field_cards[1].players.Count; }
         int player2_defence_row_modif = 0;
-        for (int i = 0; i < player2_row_modifiers[0].Count; i++) { player2_defence_row_modif += player2_row_modifiers[0][i].modif * player2_field_cards[0].cards.Count; }
+        for (int i = 0; i < player2_row_modifiers[0].Count; i++) { player2_defence_row_modif += player2_row_modifiers[0][i].modif * player2_field_cards[0].players.Count; }
         int player2_attack_row_modif = 0;
-        for (int i = 0; i < player2_row_modifiers[1].Count; i++) { player2_attack_row_modif += player2_row_modifiers[1][i].modif * player2_field_cards[1].cards.Count; }
+        for (int i = 0; i < player2_row_modifiers[1].Count; i++) { player2_attack_row_modif += player2_row_modifiers[1][i].modif * player2_field_cards[1].players.Count; }
 
         UpdateStatsUI(player1, player1_scores[0], player1_scores[1], player2_scores[0], player2_scores[1],player1_defence_row_modif,player1_attack_row_modif, player2_defence_row_modif,player2_attack_row_modif,
             player1_stat_change[0], player1_stat_change[1], player2_stat_change[0], player2_stat_change[1]);
@@ -478,8 +472,6 @@ public class MatchController : NetworkBehaviour
     private int Positive(int a) { return a >= 0 ? a : 0; }
 
     [ClientRpc]
-    //void UpdateStatsUI(NetworkIdentity player1, List<int>[] player1_scores, List<int>[] player2_scores, int player1_defence_row_modif, int player1_attack_row_modif, int player2_defence_row_modif, int player2_attack_row_modif,
-    //    List<int>[] player1_stat_change, List<int>[] player2_stat_change)
     void UpdateStatsUI(NetworkIdentity player1, int[] player1_scores_defence, int[] player1_scores_attack, int[] player2_scores_defence, int[] player2_scores_attack, 
         int player1_defence_row_modif, int player1_attack_row_modif, int player2_defence_row_modif, int player2_attack_row_modif,
         int[] player1_stat_change_defence, int[] player1_stat_change_attack, int[] player2_stat_change_defence, int[] player2_stat_change_attack)
@@ -505,7 +497,7 @@ public class MatchController : NetworkBehaviour
             int child_count;
             for (int row = 0; row < 2; row++)
             {
-                child_count = row==0 ? me_defence_players.transform.childCount : me_attack_players.transform.childCount;
+                child_count = row == 0 ? me_defence_players.transform.childCount : me_attack_players.transform.childCount;
                 for (int i = 0; i < child_count; i++)
                 {
                     if (row == 0)
@@ -754,12 +746,15 @@ public class MatchController : NetworkBehaviour
                         {
                             if (movemessage.is_opponent)
                             {
-                                player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                player2_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player2_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
                             }
                             else
                             {
-                                player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                player1_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player1_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
                             }
+
                             DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
                             DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
                         }
@@ -767,11 +762,13 @@ public class MatchController : NetworkBehaviour
                         {
                             if (movemessage.is_opponent)
                             {
-                                player1_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                player1_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player1_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
                             }
                             else
                             {
-                                player2_field_cards[movemessage.row_to].cards.Remove(players_cards[movemessage.card_index]);
+                                player2_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player2_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
                             }
                             DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
                             DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
@@ -784,11 +781,11 @@ public class MatchController : NetworkBehaviour
                 {
                     if (movemessage.is_opponent)
                     {
-                        player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                        player2_field_cards[movemessage.row_to].actions[movemessage.col_to].Add(apCard);
                     }
                     else
                     {
-                        player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                        player1_field_cards[movemessage.row_to].actions[movemessage.col_to].Add(apCard);
                     }
                     SpawnActionCard(player2, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent, ActionCardSpawnType.Player);
                 }
@@ -796,11 +793,11 @@ public class MatchController : NetworkBehaviour
                 {
                     if (movemessage.is_opponent)
                     {
-                        player1_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                        player1_field_cards[movemessage.row_to].actions[movemessage.col_to].Add(apCard);
                     }
                     else
                     {
-                        player2_field_cards[movemessage.row_to].cards[players_cards[movemessage.card_index]].Add(apCard);
+                        player2_field_cards[movemessage.row_to].actions[movemessage.col_to].Add(apCard);
                     }
                     SpawnActionCard(player1, cardindex, movemessage.row_to, movemessage.col_to, !movemessage.is_opponent, ActionCardSpawnType.Player);
                 }
@@ -816,18 +813,23 @@ public class MatchController : NetworkBehaviour
                 if (player1_players.Contains(card))
                 {
                     player1_players.Remove(card);
-                    player1_field_cards[movemessage.row_to].cards.Add(card, new List<ActionCardObj>());
+                    player1_field_cards[movemessage.row_to].players.Add(card);
+                    player1_field_cards[movemessage.row_to].actions.Add(new List<ActionCardObj>());
                     SpawnPlayerCard(player2, cardindex, movemessage.row_to);
                 }
                 else Debug.Log(("WTF", "Current player doesn't have that card"), currentPlayer);
             }
             else
             {
-                if (player1_field_cards[movemessage.row_from].cards.ContainsKey(card))
+                if (player1_field_cards[movemessage.row_from].players.Contains(card))
                 {
-                    List<ActionCardObj> cards_modifs = player1_field_cards[movemessage.row_from].cards[card];
-                    player1_field_cards[movemessage.row_to].cards.Add(card, cards_modifs);
-                    player1_field_cards[movemessage.row_from].cards.Remove(card);
+
+                    List<ActionCardObj> card_modifs = player1_field_cards[movemessage.row_from].actions[movemessage.col_from];
+                    player1_field_cards[movemessage.row_to].players.Add(card);
+                    player1_field_cards[movemessage.row_to].actions.Add(card_modifs);
+
+                    player1_field_cards[movemessage.row_from].players.RemoveAt(movemessage.col_from);
+                    player1_field_cards[movemessage.row_from].actions.RemoveAt(movemessage.col_from);
                 }
                 else Debug.Log(("WTF", "Where did current player pulled that card from?"), currentPlayer);
                 MovePlayerCard(player2, movemessage);
@@ -840,18 +842,22 @@ public class MatchController : NetworkBehaviour
                 if (player2_players.Contains(card))
                 {
                     player2_players.Remove(card);
-                    player2_field_cards[movemessage.row_to].cards.Add(card, new List<ActionCardObj>());
+                    player2_field_cards[movemessage.row_to].players.Add(card);
+                    player2_field_cards[movemessage.row_to].actions.Add(new List<ActionCardObj>());
                     SpawnPlayerCard(player1, cardindex, movemessage.row_to);
                 }
                 else Debug.Log(("WTF", "Current player doesn't have that card"), currentPlayer);
             }
             else
             {
-                if (player2_field_cards[movemessage.row_from].cards.ContainsKey(card))
+                if (player2_field_cards[movemessage.row_from].players.Contains(card))      //player2_field_cards[movemessage.row_from].cards.ContainsKey(card))
                 {
-                    List<ActionCardObj> cards_modifs = player2_field_cards[movemessage.row_from].cards[card];
-                    player2_field_cards[movemessage.row_to].cards.Add(card, cards_modifs);
-                    player2_field_cards[movemessage.row_from].cards.Remove(card);
+                    List<ActionCardObj> card_modifs = player2_field_cards[movemessage.row_from].actions[movemessage.col_from];
+                    player2_field_cards[movemessage.row_to].players.Add(card);
+                    player2_field_cards[movemessage.row_to].actions.Add(card_modifs);
+
+                    player2_field_cards[movemessage.row_from].players.RemoveAt(movemessage.col_from);
+                    player2_field_cards[movemessage.row_from].actions.RemoveAt(movemessage.col_from);
                 }
                 else Debug.Log(("WTF", "Where did current player pulled that card from?"), currentPlayer);
                 MovePlayerCard(player1, movemessage);
@@ -1091,7 +1097,6 @@ public class MatchController : NetworkBehaviour
     public void SpawnPlayerCard(NetworkIdentity player, int cardindex, int row)
     {
         if (!player.isLocalPlayer) { return; }
-        PlayerCardObj obj = players_cards[cardindex];
         GameObject card = Instantiate(PlayerCardPrefab);
         PlayerCard cardscript = card.GetComponent<PlayerCard>();
         if (row == -1)

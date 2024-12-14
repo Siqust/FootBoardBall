@@ -8,7 +8,7 @@ public class MatchNetworkManager : NetworkManager
     [Header("Match GUI")]
     public GameObject canvas;
     public CanvasController canvasController;
-    public bool isServer = false;
+    public bool isServer;
     public static new MatchNetworkManager singleton { get; private set; }
 
     /// <summary>
@@ -25,6 +25,10 @@ public class MatchNetworkManager : NetworkManager
         {
             this.StartClient();
             gameObject.GetComponent<NetworkManagerHUD>().enabled = false;
+        }
+        else
+        {
+            Debug.Log(networkAddress);
         }
     }
     #region Server System Callbacks
@@ -68,6 +72,7 @@ public class MatchNetworkManager : NetworkManager
     {
         base.OnClientConnect();
         canvasController.OnClientConnect();
+        Debug.Log("Connected");
     }
 
     /// <summary>

@@ -40,7 +40,6 @@ public class PlayerModifs : MonoBehaviour, IDropHandler
             move.card_index = card.index;
 
             matchcontroller.MakePlay(MoveType.ActionOnPlayer, putted_card.index, move);
-            Debug.Log("Played with action");
         }
     }
 

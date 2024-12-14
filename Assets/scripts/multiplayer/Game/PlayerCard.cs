@@ -109,6 +109,7 @@ public class PlayerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         {
             transform.GetChild(i).GetComponent<ActionCard>().delete();
         }
+        transform.SetParent(null);
         Destroy(visualcard);
         Destroy(gameObject);
     }

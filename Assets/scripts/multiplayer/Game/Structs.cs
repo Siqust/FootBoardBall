@@ -56,5 +56,6 @@ public enum PlayerAbility : byte
 public enum ActionAbility : byte
 {
     None,
+    ChangePlayer,
     RemovePlayer
 }
