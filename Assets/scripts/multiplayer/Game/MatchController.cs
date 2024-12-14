@@ -263,11 +263,19 @@ public class MatchController : NetworkBehaviour
                 if (!(actions_cards[cardindex].cardtype == ActionCardType.ActPlayerLT || actions_cards[cardindex].cardtype == ActionCardType.ActPlayerOT)) { Debug.LogError("not player action card"); return; }
                 if (currentPlayer == player1)
                 {
-                    player1_actions.Remove(actions_cards[cardindex]);
+                    if (player1_actions.Contains(actions_cards[cardindex]))
+                    {
+                        player1_actions.Remove(actions_cards[cardindex]);
+                    }
+                    else { Debug.Log("WTF he doesn't have that action card"); }
                 }
                 else
                 {
-                    player2_actions.Remove(actions_cards[cardindex]);
+                    if (player2_actions.Contains(actions_cards[cardindex]))
+                    {
+                        player2_actions.Remove(actions_cards[cardindex]);
+                    }
+                    else { Debug.Log("WTF he doesn't have that action card"); }
                 }
                 PlayedWithActionOnPlayer(cardindex, movemessage);
                 break;
@@ -769,6 +777,47 @@ public class MatchController : NetworkBehaviour
                             {
                                 player2_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
                                 player2_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
+                            }
+                            DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                            DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
+                        }
+                        break;
+                    case ActionAbility.ChangePlayer:
+                        if (currentPlayer == player1)
+                        {
+                            if (movemessage.is_opponent)
+                            {
+                                player2_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player2_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
+                                SpawnPlayerCard(player2, movemessage.card_index, -1);
+                                player2_players.Add(players_cards[movemessage.card_index]);
+                            }
+                            else
+                            {
+                                player1_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player1_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
+                                SpawnPlayerCard(player1, movemessage.card_index, -1);
+                                player1_players.Add(players_cards[movemessage.card_index]);
+                            }
+
+                            DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
+                            DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);
+                        }
+                        else
+                        {
+                            if (movemessage.is_opponent)
+                            {
+                                player1_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player1_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
+                                SpawnPlayerCard(player1, movemessage.card_index, -1);
+                                player1_players.Add(players_cards[movemessage.card_index]);
+                            }
+                            else
+                            {
+                                player2_field_cards[movemessage.row_to].players.RemoveAt(movemessage.col_to);
+                                player2_field_cards[movemessage.row_to].actions.RemoveAt(movemessage.col_to);
+                                SpawnPlayerCard(player2, movemessage.card_index, -1);
+                                player2_players.Add(players_cards[movemessage.card_index]);
                             }
                             DeletePlayerCard(player2, movemessage.col_to, movemessage.row_to, movemessage.is_opponent);
                             DeletePlayerCard(player1, movemessage.col_to, movemessage.row_to, !movemessage.is_opponent);

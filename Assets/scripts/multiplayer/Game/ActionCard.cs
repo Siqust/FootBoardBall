@@ -27,24 +27,31 @@ public class ActionCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         visualcard = Instantiate(visualcard_prefab, visualcardparent);
         if (visualcard_pos != null) { visualcard.transform.position = visualcard_pos; }
         Color selfcolor = matchcontroller.actions_cards[index].color;//transform.GetComponent<RawImage>().color;
-        visualcard.GetComponent<RawImage>().color = new Color(selfcolor.r,selfcolor.g,selfcolor.b, 255);
+        visualcard.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 255);
         transform.GetComponent<RawImage>().color = new Color(selfcolor.r, selfcolor.g, selfcolor.b, 0);
         FollowCard visualcardscript = visualcard.GetComponent<FollowCard>();
         visualcardscript.target_card = transform;
         visualcardscript.ActionModifierText.gameObject.SetActive(true); visualcardscript.ActionTypeText.gameObject.SetActive(true);
-        if (cardtype == ActionCardType.ActPlayerLT)
-        {
-            visualcardscript.ActionTypeText.text = "ÈÃÐÎÊ";
-        }
-        else if (cardtype == ActionCardType.ActRow)
-        {
-            visualcardscript.ActionTypeText.text = "ÐßÄ";
-        }
-        else if (cardtype == ActionCardType.ActPlayerOT)
-        {
-            visualcardscript.ActionTypeText.gameObject.SetActive(false);
-            visualcardscript.ActionModifierText.gameObject.SetActive(false);
-            visualcardscript.Deletion.SetActive(true);
+        switch (cardtype) {
+            case ActionCardType.ActPlayerLT:
+                visualcardscript.ActionTypeText.text = "ÈÃÐÎÊ";
+                break;
+            case ActionCardType.ActRow:
+                visualcardscript.ActionTypeText.text = "ÐßÄ";
+                break;
+            case ActionCardType.ActPlayerOT:
+                visualcardscript.ActionTypeText.gameObject.SetActive(false);
+                visualcardscript.ActionModifierText.gameObject.SetActive(false);
+                
+                switch (matchcontroller.actions_cards[index].ability) {
+                    case ActionAbility.RemovePlayer:
+                        visualcardscript.Deletion.SetActive(true);
+                        break;
+                    case ActionAbility.ChangePlayer:
+                        visualcardscript.Replacement.SetActive(true);
+                        break;
+                }
+                break;
         }
         var plus = matchcontroller.actions_cards[index].modif > 0 ? "+" : "";
         visualcardscript.ActionModifierText.text = plus + matchcontroller.actions_cards[index].modif.ToString();

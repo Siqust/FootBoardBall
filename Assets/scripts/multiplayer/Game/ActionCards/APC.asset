@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a8445770b7601c498457048322780c0, type: 3}
-  m_Name: APR
+  m_Name: APC
   m_EditorClassIdentifier: 
   cardtype: 2
-  ability: 2
-  color: {r: 1, g: 0, b: 0, a: 0}
+  ability: 1
+  color: {r: 0.71805, g: 0, b: 1, a: 0}
   CardImg: {fileID: 0}
   modif: 0

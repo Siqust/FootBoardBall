@@ -959,6 +959,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MatchController Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[9]
+      value: 
+      objectReference: {fileID: 11400000, guid: 4053a920a153c76499a9d92fcd5b1526, type: 2}
     - target: {fileID: 2509835458997409085, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
       propertyPath: modif_text
       value: 
