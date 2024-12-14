@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using TMPro;
 using Mirror;
 
 [AddComponentMenu("")]
@@ -8,7 +9,8 @@ public class MatchNetworkManager : NetworkManager
     [Header("Match GUI")]
     public GameObject canvas;
     public CanvasController canvasController;
-    public bool isServer;
+    [SerializeField] private bool isServer;
+    [SerializeField] private TextMeshProUGUI connection_log;
     public static new MatchNetworkManager singleton { get; private set; }
 
     /// <summary>
@@ -25,10 +27,6 @@ public class MatchNetworkManager : NetworkManager
         {
             this.StartClient();
             gameObject.GetComponent<NetworkManagerHUD>().enabled = false;
-        }
-        else
-        {
-            Debug.Log(networkAddress);
         }
     }
     #region Server System Callbacks
@@ -69,10 +67,11 @@ public class MatchNetworkManager : NetworkManager
     /// <para>The default implementation of this function sets the client as ready and adds a player. Override the function to dictate what happens when the client connects.</para>
     /// </summary>
     public override void OnClientConnect()
-    {
+    { 
         base.OnClientConnect();
         canvasController.OnClientConnect();
-        Debug.Log("Connected");
+        canvas.SetActive(true);
+        connection_log.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -106,7 +105,6 @@ public class MatchNetworkManager : NetworkManager
     /// </summary>
     public override void OnStartClient()
     {
-        canvas.SetActive(true);
         canvasController.OnStartClient();
     }
 
@@ -125,6 +123,18 @@ public class MatchNetworkManager : NetworkManager
     public override void OnStopClient()
     {
         canvasController.OnStopClient();
+        if (!isServer)
+        {
+            connection_log.gameObject.SetActive(true);
+            if (connection_log.text.Length >= 84) { connection_log.text = ""; }
+            connection_log.text = connection_log.text + "Ошибка подключения... ";
+            StartCoroutine(RestartClient());
+        }
+    }
+    IEnumerator RestartClient()
+    {
+        yield return new WaitForSeconds(1);
+        this.StartClient();
     }
 
     #endregion
