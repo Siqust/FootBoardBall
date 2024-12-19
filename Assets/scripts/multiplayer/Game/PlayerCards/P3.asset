@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d6c9db0bd77f784bab0249e17aedcd2, type: 3}
-  m_Name: P22
+  m_Name: P3
   m_EditorClassIdentifier: 
   playerability: 0
   CardImg: {fileID: 0}
-  color: {r: 0.4539427, g: 0.4539427, b: 0.9528302, a: 0}
-  attack: 2
-  defence: 2
+  color: {r: 0.7433155080213905, g: 1.0, b: 0.0, a: 1}
+  attack: 11
+  defence: 6
+    

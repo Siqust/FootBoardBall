@@ -960,9 +960,125 @@ PrefabInstance:
       value: MatchController Variant
       objectReference: {fileID: 0}
     - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
-      propertyPath: actions_cards.Array.data[9]
+      propertyPath: actions_cards.Array.size
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.size
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[0]
       value: 
       objectReference: {fileID: 11400000, guid: 4053a920a153c76499a9d92fcd5b1526, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: e4c4b1211721c7c4392942600aeb8992, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: edd401085edfb5b4a9e378b4a909963c, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: 21a4be42dc7404940bfe8b413837fc94, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[4]
+      value: 
+      objectReference: {fileID: 11400000, guid: ebc6bacb6a07465479df99f8460bcca0, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[5]
+      value: 
+      objectReference: {fileID: 11400000, guid: ebc6bacb6a07465479df99f8460bcca0, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[6]
+      value: 
+      objectReference: {fileID: 11400000, guid: fc25dd77f8e5ded4fa099de01478f402, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[7]
+      value: 
+      objectReference: {fileID: 11400000, guid: b565bbb8663058247913850caa2f407f, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[8]
+      value: 
+      objectReference: {fileID: 11400000, guid: b565bbb8663058247913850caa2f407f, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[9]
+      value: 
+      objectReference: {fileID: 11400000, guid: d410167fc597c2c46ba4019dc1884141, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: d93a6d308dc31b54799f236ed769d81a, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: da4896ebffcbc504da2a21476aa1c117, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 7797c4487ae25eb41a0039fab5b66e61, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: 5a4769731f92dea46bb3a0cf5b2fb5f7, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[4]
+      value: 
+      objectReference: {fileID: 11400000, guid: 864ea60e18530e440b1d996de7a53175, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[5]
+      value: 
+      objectReference: {fileID: 11400000, guid: ca75dc50410c3814b8087b90a316ee5f, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[6]
+      value: 
+      objectReference: {fileID: 11400000, guid: d2ad9d601acbf1c45ab7e9897734b6fc, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[7]
+      value: 
+      objectReference: {fileID: 11400000, guid: 04acca29af3a2e14985c637678e2407c, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[8]
+      value: 
+      objectReference: {fileID: 11400000, guid: 3c2b8879efcada443a28f803b0373adf, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[9]
+      value: 
+      objectReference: {fileID: 11400000, guid: 501bc7079d2a9304996ff2a4b4c14446, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[10]
+      value: 
+      objectReference: {fileID: 11400000, guid: 9086d86d4999c2c4fa324114721762f3, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[11]
+      value: 
+      objectReference: {fileID: 11400000, guid: d410167fc597c2c46ba4019dc1884141, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[12]
+      value: 
+      objectReference: {fileID: 11400000, guid: 9086d86d4999c2c4fa324114721762f3, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[13]
+      value: 
+      objectReference: {fileID: 11400000, guid: fc25dd77f8e5ded4fa099de01478f402, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: actions_cards.Array.data[14]
+      value: 
+      objectReference: {fileID: 11400000, guid: b565bbb8663058247913850caa2f407f, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[10]
+      value: 
+      objectReference: {fileID: 11400000, guid: 1ceafa775c16dff42a0b4ff0099eb441, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[11]
+      value: 
+      objectReference: {fileID: 11400000, guid: f506617cd427fa44daf04b1dd4da406f, type: 2}
+    - target: {fileID: 2081284820967130179, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
+      propertyPath: players_cards.Array.data[12]
+      value: 
+      objectReference: {fileID: 11400000, guid: f506617cd427fa44daf04b1dd4da406f, type: 2}
     - target: {fileID: 2509835458997409085, guid: a9261375fa0f9bc4e9490b1771f91860, type: 3}
       propertyPath: modif_text
       value: 

@@ -72,6 +72,7 @@ public class MatchNetworkManager : NetworkManager
         canvasController.OnClientConnect();
         canvas.SetActive(true);
         connection_log.gameObject.SetActive(false);
+        connection_log.text = "";
     }
 
     /// <summary>

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardtype: 3
   ability: 0
-  color: {r: 0, g: 0.099416494, b: 1, a: 0}
+  color: {r: 0.2660888, g: 0.6415094, b: 0, a: 1}
   CardImg: {fileID: 0}
   modif: 3
