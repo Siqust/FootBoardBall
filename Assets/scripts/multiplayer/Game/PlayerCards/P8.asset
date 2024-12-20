@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerability: 0
   CardImg: {fileID: 0}
-  color: {r: 0.0, g: 1.0, b: 0.780748663101604, a: 1}
+  color: {r: 0.0, g: 0.5833333333333335, b: 1, a: 1}
   attack: 7
   defence: 10
     
